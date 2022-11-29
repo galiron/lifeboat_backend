@@ -1,0 +1,101 @@
+import { Request, Response } from 'express';
+import jwt, { Secret, JwtPayload } from 'jsonwebtoken';
+import generator from 'generate-password-ts';
+import bcrypt from 'bcrypt';
+import { Watchdog } from 'watchdog'
+
+export class ControlLock {
+    isLocked: boolean = false;
+    controllerToken = '';
+    private saltRounds = 9;
+    private password = "";
+    private secretKey = "";
+    private dog!: Watchdog;
+    private watchDogSleep: boolean = false;
+
+    async takeControl(secretKey: string, ws: any) {
+        let success: boolean = false;
+        if (this.isLocked == false) {
+            this.isLocked = true;
+            this.password = generator.generate({
+                length: 20,
+                numbers: true,
+                symbols: true
+            });
+            this.password = await bcrypt.hash(this.password, this.saltRounds);
+            this.controllerToken = jwt.sign(this.password, secretKey);
+            this.secretKey = secretKey;
+            success = true;
+            this.dog = new Watchdog(2200) // 2.2 sec
+            this.dog.on('reset', () => {console.log("bark bark, where is my food?")
+            this.dog.sleep()})
+            this.dog.on('feed', () => {console.log("nom nom nom")})
+            this.dog.on('sleep', () => {console.log("I'm tired"); this.watchDogSleep = true})
+            this.dog.feed({
+                data:    'delicious',
+                timeout: 2200,
+              })
+              this.watchDogSleep = false;
+            this.watchDogPoll(ws);
+        }
+        return {
+            jwt: this.controllerToken,
+            success,
+            interfaceType: "WSjwtReply"
+        }
+    };
+
+    watchDogPoll(ws: any){
+        if(this.watchDogSleep == false){
+            this.requestDogFood(ws)
+            setTimeout(() => {
+                this.watchDogPoll(ws)
+            }, 1000);
+        } 
+    }
+
+    requestDogFood(ws: any) : any{
+        console.log("sending dog food request")
+        ws.send(JSON.stringify({
+            success: true,
+            interfaceType: "WSFeedDogRequest"
+        }))
+    }
+
+    feedWatchdog(clientToken: string){
+        let success: boolean = false;
+        try {
+            console.log("trying to feed dog")
+            var decoded = jwt.verify(clientToken, this.secretKey);
+            success = true;
+            this.dog.feed({
+                data:    'delicious',
+                timeout: 2200,
+              })
+            // console.log(decoded)
+        } catch(err) {
+            console.log(err)
+        }
+    }
+
+    releaseControl(clientToken: string) {
+        let success: boolean = false;
+        try {
+            var decoded = jwt.verify(clientToken, this.secretKey);
+            this.isLocked = false;
+            success = true;
+            this.dog.sleep();
+            console.log(decoded)
+        } catch(err) {
+            console.log(err)
+        }
+        return {
+            success,
+            interfaceType: "WSReply"
+        }
+    }
+
+
+
+
+}

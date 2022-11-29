@@ -1,0 +1,117 @@
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const ControlLock_1 = require("./logic/ControlLock");
+// import { ControlLock } from './models/ControlLock';
+// import express, { application } from 'express';
+// import cors from 'cors';
+// import expressWs from 'express-ws';
+// const app = expressWs(express()).app;
+// const PORT:Number=3000;
+// const allowedOrigins : any = '*';
+// const options: cors.CorsOptions = {
+//     origin: allowedOrigins
+// };
+// let controlLocked: boolean = false;
+// let control: ControlLock = new ControlLock;
+// app.use(cors(options));
+// app.use(express.json());
+// // Handling GET / Request
+// app.get('/', (req, res) => {
+// 	res.send('Welcome to typescript backend!');
+// })
+// app.post('/takeControl', control.takeControl);
+// app.post('/releaseControl', control.releaseControl);
+// app.ws('/connection', (ws, req) => {
+// 	console.log('test');
+// 	ws.on('message', (msg) => {
+// 		console.log(msg);
+// 		ws.send(msg);
+// 	});
+// });
+// // Server setup
+// app.listen(PORT,() => {
+// 	console.log('The application is listening '
+// 		+ 'on port http://localhost:'+PORT);
+// })
+const express_1 = __importDefault(require("express"));
+const http = __importStar(require("http"));
+const WebSocket = __importStar(require("ws"));
+const app = (0, express_1.default)();
+// initialize control lock
+const controlLock = new ControlLock_1.ControlLock;
+// initialize a simple http server
+const server = http.createServer(app);
+// initialize the WebSocket server instance
+const wss = new WebSocket.Server({ server });
+wss.on('connection', (ws) => {
+    ws.on('message', (msgString) => {
+        const msg = JSON.parse(msgString);
+        if (msg) {
+            let api = msg.api;
+            console.log(msg.api);
+            if (api === "lock") {
+                if (msg.data) {
+                    if (msg.data.secretKey) {
+                        controlLock.takeControl(msg.data.secretKey, ws)
+                            .then((jwtMsg) => {
+                            console.log(jwtMsg);
+                            ws.send(JSON.stringify(jwtMsg));
+                        });
+                    }
+                }
+            }
+            if (api === "unlock") {
+                if (msg.data) {
+                    console.log(msg);
+                    if (msg.data.jwt) {
+                        const releaseMessage = controlLock.releaseControl(msg.data.jwt);
+                        console.log(releaseMessage);
+                        ws.send(JSON.stringify(releaseMessage));
+                    }
+                }
+            }
+            if (api === "feedWatchdog") {
+                if (msg.data) {
+                    if (msg.data.jwt) {
+                        controlLock.feedWatchdog(msg.data.jwt);
+                        //console.log(releaseMessage)
+                        //ws.send(JSON.stringify(releaseMessage))
+                    }
+                }
+            }
+        }
+        else {
+            ws.send({ success: false, interfaceType: "error" });
+        }
+    });
+});
+// start our server
+server.listen(process.env.PORT || 3000, () => {
+    console.log(`Server started on port ${server.address().port} :)`);
+});
