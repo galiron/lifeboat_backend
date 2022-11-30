@@ -24,6 +24,7 @@
     "express-ws": "^5.0.2",
     "generate-password-ts": "^1.6.3",
     "jsonwebtoken": "^8.5.1",
+    "socket.io": "^4.5.4",
     "watchdog": "^0.8.17"
   },
   "devDependencies": {

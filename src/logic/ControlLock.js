@@ -26,7 +26,7 @@ class ControlLock {
         this.secretKey = "";
         this.watchDogSleep = false;
     }
-    takeControl(secretKey, ws) {
+    takeControl(secretKey, socket) {
         return __awaiter(this, void 0, void 0, function* () {
             let success = false;
             if (this.isLocked == false) {
@@ -46,13 +46,13 @@ class ControlLock {
                     this.dog.sleep();
                 });
                 this.dog.on('feed', () => { console.log("nom nom nom"); });
-                this.dog.on('sleep', () => { console.log("I'm tired"); this.watchDogSleep = true; });
+                this.dog.on('sleep', () => { console.log("I'm tired"); this.watchDogSleep = true; this.isLocked = false; });
                 this.dog.feed({
                     data: 'delicious',
                     timeout: 2200,
                 });
                 this.watchDogSleep = false;
-                this.watchDogPoll(ws);
+                this.watchDogPoll(socket);
             }
             return {
                 jwt: this.controllerToken,
@@ -62,17 +62,21 @@ class ControlLock {
         });
     }
     ;
-    watchDogPoll(ws) {
+    watchDogPoll(socket) {
         if (this.watchDogSleep == false) {
-            this.requestDogFood(ws);
+            this.requestDogFood(socket);
             setTimeout(() => {
-                this.watchDogPoll(ws);
+                this.watchDogPoll(socket);
             }, 1000);
         }
     }
-    requestDogFood(ws) {
+    requestDogFood(socket) {
         console.log("sending dog food request");
-        ws.send(JSON.stringify({
+        // socket.emit("WSFeedDogRequest", {
+        //     success: true,
+        //     interfaceType: "WSFeedDogRequest"
+        // })
+        socket.send(JSON.stringify({
             success: true,
             interfaceType: "WSFeedDogRequest"
         }));

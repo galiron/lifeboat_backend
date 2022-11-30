@@ -1,50 +1,13 @@
 import { ControlLock } from './logic/ControlLock';
 import { WSMessage } from './models/wsMessage';
-// import { ControlLock } from './models/ControlLock';
-// import express, { application } from 'express';
-// import cors from 'cors';
-// import expressWs from 'express-ws';
-
-// const app = expressWs(express()).app;
-// const PORT:Number=3000;
-// const allowedOrigins : any = '*';
-// const options: cors.CorsOptions = {
-//     origin: allowedOrigins
-// };
-// let controlLocked: boolean = false;
-// let control: ControlLock = new ControlLock;
-// app.use(cors(options));
-// app.use(express.json());
-
-// // Handling GET / Request
-// app.get('/', (req, res) => {
-// 	res.send('Welcome to typescript backend!');
-// })
-
-// app.post('/takeControl', control.takeControl);
-
-// app.post('/releaseControl', control.releaseControl);
-
-// app.ws('/connection', (ws, req) => {
-// 	console.log('test');
-// 	ws.on('message', (msg) => {
-// 		console.log(msg);
-// 		ws.send(msg);
-// 	});
-// });
-
-// // Server setup
-// app.listen(PORT,() => {
-// 	console.log('The application is listening '
-// 		+ 'on port http://localhost:'+PORT);
-// })
-
 import express from 'express';
 import * as http from 'http';
 import * as WebSocket from 'ws';
 import { AddressInfo } from 'net';
+import {Server} from "socket.io"
 
 const app = express();
+
 
 // initialize control lock
 const controlLock: ControlLock = new ControlLock
@@ -54,6 +17,47 @@ const server = http.createServer(app);
 
 // initialize the WebSocket server instance
 const wss = new WebSocket.Server({ server });
+
+// const io = new Server(server, {
+// 	cors: {
+// 		origin: ["*"]
+// 	  }
+// })
+
+// io.on("connection", (socket) => {
+// 	//socket.emit("hello", "world")
+// 	socket.on("lock", (msg) => {
+// 		if(msg.data){
+// 			if (msg.data.secretKey){
+// 				controlLock.takeControl(msg.data.secretKey, socket)
+// 				.then((jwtMsg) => {
+// 					console.log(jwtMsg)
+// 					socket.emit("WSjwtReply",jwtMsg)
+// 					}
+// 				)
+// 			}
+// 		}
+// 	})
+// 	socket.on("unlock", (msg) => {
+// 		if(msg.data){
+// 			console.log(msg)
+// 			if (msg.data.jwt){
+// 				const releaseMessage = controlLock.releaseControl(msg.data.jwt)
+// 				console.log(releaseMessage)
+// 				socket.emit("WSReply",releaseMessage)
+// 			}
+// 		}
+// 	})
+// 	socket.on("feedWatchdog", (msg) => {
+// 		if(msg.data){
+// 			if (msg.data.jwt){
+// 				controlLock.feedWatchdog(msg.data.jwt)
+// 				//console.log(releaseMessage)
+// 				//ws.send(JSON.stringify(releaseMessage))
+// 			}
+// 		}
+// 	})
+// })
 
 wss.on('connection', (ws: WebSocket) => {
 

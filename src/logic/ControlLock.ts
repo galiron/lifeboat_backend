@@ -13,7 +13,7 @@ export class ControlLock {
     private dog!: Watchdog;
     private watchDogSleep: boolean = false;
 
-    async takeControl(secretKey: string, ws: any) {
+    async takeControl(secretKey: string, socket: any) {
         let success: boolean = false;
         if (this.isLocked == false) {
             this.isLocked = true;
@@ -30,33 +30,50 @@ export class ControlLock {
             this.dog.on('reset', () => {console.log("bark bark, where is my food?")
             this.dog.sleep()})
             this.dog.on('feed', () => {console.log("nom nom nom")})
-            this.dog.on('sleep', () => {console.log("I'm tired"); this.watchDogSleep = true})
+            this.dog.on('sleep', () => {
+                this.watchDogSleep = true;
+                this.isLocked = false;
+                socket.send(JSON.stringify({
+                    success: true,
+                    interfaceType: "WSconnectionTerminated"
+                }));
+            })
             this.dog.feed({
                 data:    'delicious',
                 timeout: 2200,
               })
               this.watchDogSleep = false;
-            this.watchDogPoll(ws);
-        }
-        return {
-            jwt: this.controllerToken,
-            success,
-            interfaceType: "WSjwtReply"
+            this.watchDogPoll(socket);
+            return {
+                jwt: this.controllerToken, // 
+                success,
+                interfaceType: "WSjwtReply"
+            }
+        } else {
+            return {
+                jwt: "", // 
+                success,
+                interfaceType: "WSjwtReply"
+            }
         }
     };
 
-    watchDogPoll(ws: any){
+    watchDogPoll(socket: any){
         if(this.watchDogSleep == false){
-            this.requestDogFood(ws)
+            this.requestDogFood(socket)
             setTimeout(() => {
-                this.watchDogPoll(ws)
+                this.watchDogPoll(socket)
             }, 1000);
         } 
     }
 
-    requestDogFood(ws: any) : any{
+    requestDogFood(socket: any) : any{
         console.log("sending dog food request")
-        ws.send(JSON.stringify({
+        // socket.emit("WSFeedDogRequest", {
+        //     success: true,
+        //     interfaceType: "WSFeedDogRequest"
+        // })
+        socket.send(JSON.stringify({
             success: true,
             interfaceType: "WSFeedDogRequest"
         }))
