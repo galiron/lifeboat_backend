@@ -30,11 +30,14 @@ const ControlLock_1 = require("./logic/ControlLock");
 const express_1 = __importDefault(require("express"));
 const http = __importStar(require("http"));
 const WebSocket = __importStar(require("ws"));
+const ControllsSocket_1 = require("./logic/ControllsSocket");
 const app = (0, express_1.default)();
 // initialize control lock
 const controlLock = new ControlLock_1.ControlLock;
 // initialize a simple http server
 const server = http.createServer(app);
+const controlSocket = new ControllsSocket_1.ControlSocket();
+//controlSocket.emit("hello_world","hello_world")
 // initialize the WebSocket server instance
 const wss = new WebSocket.Server({ server });
 // const io = new Server(server, {
@@ -50,7 +53,7 @@ const wss = new WebSocket.Server({ server });
 // 				controlLock.takeControl(msg.data.secretKey, socket)
 // 				.then((jwtMsg) => {
 // 					console.log(jwtMsg)
-// 					socket.emit("WSjwtReply",jwtMsg)
+// 					socket.emit("WSJwtReply",jwtMsg)
 // 					}
 // 				)
 // 			}
@@ -109,6 +112,48 @@ wss.on('connection', (ws) => {
                         controlLock.feedWatchdog(msg.data.jwt);
                         //console.log(releaseMessage)
                         //ws.send(JSON.stringify(releaseMessage))
+                    }
+                }
+            }
+            if (api === "select") {
+                if (msg.data) {
+                    if (msg.data.jwt && msg.data.instruction) {
+                        const isController = controlLock.verify(msg.data.jwt);
+                        if (isController) {
+                            controlSocket.emit("select", msg.data.instruction);
+                        }
+                    }
+                }
+            }
+            if (api === "shift") {
+                if (msg.data) {
+                    if (msg.data.jwt && msg.data.instruction) {
+                        const isController = controlLock.verify(msg.data.jwt);
+                        if (isController) {
+                            controlSocket.emit("shift", msg.data.instruction);
+                        }
+                    }
+                }
+            }
+            if (api === "throttle") {
+                console.log("throttle");
+                if (msg.data) {
+                    if (msg.data.jwt && msg.data.instruction) {
+                        const isController = controlLock.verify(msg.data.jwt);
+                        if (isController) {
+                            console.log("emit throttle");
+                            controlSocket.emit("throttle", msg.data.instruction);
+                        }
+                    }
+                }
+            }
+            if (api === "steer") {
+                if (msg.data) {
+                    if (msg.data.jwt && msg.data.instruction) {
+                        const isController = controlLock.verify(msg.data.jwt);
+                        if (isController) {
+                            controlSocket.emit("steer", msg.data.instruction);
+                        }
                     }
                 }
             }

@@ -41,24 +41,35 @@ class ControlLock {
                 this.secretKey = secretKey;
                 success = true;
                 this.dog = new watchdog_1.Watchdog(2200); // 2.2 sec
-                this.dog.on('reset', () => {
-                    console.log("bark bark, where is my food?");
-                    this.dog.sleep();
+                this.dog.on('reset', () => { this.dog.sleep(); });
+                this.dog.on('feed', () => { });
+                this.dog.on('sleep', () => {
+                    this.watchDogSleep = true;
+                    this.isLocked = false;
+                    socket.send(JSON.stringify({
+                        success: true,
+                        interfaceType: "WSConnectionTerminated"
+                    }));
                 });
-                this.dog.on('feed', () => { console.log("nom nom nom"); });
-                this.dog.on('sleep', () => { console.log("I'm tired"); this.watchDogSleep = true; this.isLocked = false; });
                 this.dog.feed({
                     data: 'delicious',
                     timeout: 2200,
                 });
                 this.watchDogSleep = false;
                 this.watchDogPoll(socket);
+                return {
+                    jwt: this.controllerToken,
+                    success,
+                    interfaceType: "WSJwtReply"
+                };
             }
-            return {
-                jwt: this.controllerToken,
-                success,
-                interfaceType: "WSjwtReply"
-            };
+            else {
+                return {
+                    jwt: "",
+                    success,
+                    interfaceType: "WSJwtReply"
+                };
+            }
         });
     }
     ;
@@ -71,7 +82,6 @@ class ControlLock {
         }
     }
     requestDogFood(socket) {
-        console.log("sending dog food request");
         // socket.emit("WSFeedDogRequest", {
         //     success: true,
         //     interfaceType: "WSFeedDogRequest"
@@ -84,7 +94,6 @@ class ControlLock {
     feedWatchdog(clientToken) {
         let success = false;
         try {
-            console.log("trying to feed dog");
             var decoded = jsonwebtoken_1.default.verify(clientToken, this.secretKey);
             success = true;
             this.dog.feed({
@@ -113,6 +122,16 @@ class ControlLock {
             success,
             interfaceType: "WSReply"
         };
+    }
+    verify(clientToken) {
+        try {
+            var decoded = jsonwebtoken_1.default.verify(clientToken, this.secretKey);
+            return true;
+        }
+        catch (err) {
+            console.log(err);
+            return false;
+        }
     }
 }
 exports.ControlLock = ControlLock;

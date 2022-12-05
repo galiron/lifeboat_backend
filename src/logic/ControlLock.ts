@@ -27,15 +27,14 @@ export class ControlLock {
             this.secretKey = secretKey;
             success = true;
             this.dog = new Watchdog(2200) // 2.2 sec
-            this.dog.on('reset', () => {console.log("bark bark, where is my food?")
-            this.dog.sleep()})
-            this.dog.on('feed', () => {console.log("nom nom nom")})
+            this.dog.on('reset', () => { this.dog.sleep() })
+            this.dog.on('feed', () => {})
             this.dog.on('sleep', () => {
                 this.watchDogSleep = true;
                 this.isLocked = false;
                 socket.send(JSON.stringify({
                     success: true,
-                    interfaceType: "WSconnectionTerminated"
+                    interfaceType: "WSConnectionTerminated"
                 }));
             })
             this.dog.feed({
@@ -47,13 +46,13 @@ export class ControlLock {
             return {
                 jwt: this.controllerToken, // 
                 success,
-                interfaceType: "WSjwtReply"
+                interfaceType: "WSJwtReply"
             }
         } else {
             return {
                 jwt: "", // 
                 success,
-                interfaceType: "WSjwtReply"
+                interfaceType: "WSJwtReply"
             }
         }
     };
@@ -68,7 +67,6 @@ export class ControlLock {
     }
 
     requestDogFood(socket: any) : any{
-        console.log("sending dog food request")
         // socket.emit("WSFeedDogRequest", {
         //     success: true,
         //     interfaceType: "WSFeedDogRequest"
@@ -82,7 +80,6 @@ export class ControlLock {
     feedWatchdog(clientToken: string){
         let success: boolean = false;
         try {
-            console.log("trying to feed dog")
             var decoded = jwt.verify(clientToken, this.secretKey);
             success = true;
             this.dog.feed({
@@ -109,6 +106,16 @@ export class ControlLock {
         return {
             success,
             interfaceType: "WSReply"
+        }
+    }
+
+    verify(clientToken: string) {
+        try {
+            var decoded = jwt.verify(clientToken, this.secretKey);
+            return true;
+        } catch(err) {
+            console.log(err)
+            return false;
         }
     }
 

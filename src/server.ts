@@ -4,7 +4,8 @@ import express from 'express';
 import * as http from 'http';
 import * as WebSocket from 'ws';
 import { AddressInfo } from 'net';
-import {Server} from "socket.io"
+import { io } from "socket.io-client";
+import { ControlSocket } from './logic/ControllsSocket';
 
 const app = express();
 
@@ -14,6 +15,12 @@ const controlLock: ControlLock = new ControlLock
 
 // initialize a simple http server
 const server = http.createServer(app);
+
+const controlSocket = new ControlSocket();
+
+
+
+//controlSocket.emit("hello_world","hello_world")
 
 // initialize the WebSocket server instance
 const wss = new WebSocket.Server({ server });
@@ -32,7 +39,7 @@ const wss = new WebSocket.Server({ server });
 // 				controlLock.takeControl(msg.data.secretKey, socket)
 // 				.then((jwtMsg) => {
 // 					console.log(jwtMsg)
-// 					socket.emit("WSjwtReply",jwtMsg)
+// 					socket.emit("WSJwtReply",jwtMsg)
 // 					}
 // 				)
 // 			}
@@ -94,6 +101,48 @@ wss.on('connection', (ws: WebSocket) => {
 							controlLock.feedWatchdog(msg.data.jwt)
 							//console.log(releaseMessage)
 							//ws.send(JSON.stringify(releaseMessage))
+						}
+					}
+				}
+				if (api === "select") {
+					if(msg.data){
+						if (msg.data.jwt && msg.data.instruction){
+							const isController = controlLock.verify(msg.data.jwt);
+							if(isController){
+								controlSocket.emit("select", msg.data.instruction)
+							}
+						}
+					}
+				}
+				if (api === "shift") {
+					if(msg.data){
+						if (msg.data.jwt && msg.data.instruction){
+							const isController = controlLock.verify(msg.data.jwt);
+							if(isController){
+								controlSocket.emit("shift", msg.data.instruction)
+							}
+						}
+					}
+				}
+				if (api === "throttle") {
+					console.log("throttle")
+					if(msg.data){
+						if (msg.data.jwt && msg.data.instruction){
+							const isController = controlLock.verify(msg.data.jwt);
+							if(isController){
+								console.log("emit throttle")
+								controlSocket.emit("throttle", msg.data.instruction)
+							}
+						}
+					}
+				}
+				if (api === "steer") {
+					if(msg.data){
+						if (msg.data.jwt && msg.data.instruction){
+							const isController = controlLock.verify(msg.data.jwt);
+							if(isController){
+								controlSocket.emit("steer", msg.data.instruction)
+							}
 						}
 					}
 				}
