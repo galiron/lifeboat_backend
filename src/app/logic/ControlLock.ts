@@ -3,6 +3,9 @@ import jwt, { Secret, JwtPayload } from 'jsonwebtoken';
 import generator from 'generate-password-ts';
 import bcrypt from 'bcrypt';
 import { Watchdog } from 'watchdog'
+import { Queue } from 'queue-typescript';
+import { ControlTransferObject } from '../models/Interfaces';
+import { WSControlTransferResponse } from '../models/wsInterfaces';
 
 export class ControlLock {
     isLocked: boolean = false;
@@ -12,10 +15,11 @@ export class ControlLock {
     private secretKey = "";
     private dog!: Watchdog;
     private watchDogSleep: boolean = false;
+    private requesters: ControlTransferObject[] = [];
 
-    async takeControl(secretKey: string, socket: any) {
+    async takeControl(secretKey: string, socket: any, force?: boolean) {
         let success: boolean = false;
-        if (this.isLocked == false) {
+        if (this.isLocked == false || force === true) {
             this.isLocked = true;
             this.password = generator.generate({
                 length: 20,
@@ -26,6 +30,7 @@ export class ControlLock {
             this.controllerToken = jwt.sign(this.password, secretKey);
             this.secretKey = secretKey;
             success = true;
+            // check if old watchdog messes around with new one
             this.dog = new Watchdog(2200) // 2.2 sec
             this.dog.on('reset', () => { this.dog.sleep() })
             this.dog.on('feed', () => {})
@@ -56,6 +61,36 @@ export class ControlLock {
             }
         }
     };
+
+    /*
+        @param name: name of the requesting user that gets displayed to the user in control
+        @param secretKey: key for new jwt token generation
+    */
+    async requestControlTransfer(secretKey: string, name: string, socket: any) {
+        let identifier = generator.generate({
+            length: 20,
+            numbers: true,
+            symbols: true
+        });
+        let controlTransferObject: ControlTransferObject = {
+            secretKey,
+            name,
+            identifier
+        };
+        this.requesters.push(controlTransferObject);
+        socket.send(JSON.stringify({
+            success: true,
+            identifier,
+            interfaceType: "WSRequestControlTransfer"
+        }));
+    }
+
+    transferControlTransfer(data: WSControlTransferResponse) {
+        let newController: ControlTransferObject | undefined = this.requesters.find(requester => requester.identifier === data.identifier)
+        if (newController) {
+            this.takeControl(newController.secretKey, socket, true)
+        }
+    }
 
     watchDogPoll(socket: any){
         if(this.watchDogSleep == false){
@@ -105,7 +140,7 @@ export class ControlLock {
         }
         return {
             success,
-            interfaceType: "WSReply"
+            interfaceType: "WSLockReleaseResponse"
         }
     }
 

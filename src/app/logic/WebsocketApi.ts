@@ -1,17 +1,18 @@
 import { ControlSocket } from './ControllsSocket';
-import { WSMessage } from "../models/wsMessage";
+import { WSAPIMessage } from "../models/wsInterfaces";
 import { ControlLock } from "./ControlLock";
 import * as WebSocket from 'ws';
 
 // function that handles API calls
 export function processMessage(msgString: string, ws: WebSocket, controlSocket: ControlSocket, controlLock: ControlLock){
-    const msg: WSMessage = JSON.parse(msgString);
+    const msg: WSAPIMessage = JSON.parse(msgString);
     if (msg){
+        //TODO: lock release feedback
         let api = msg.api;
         console.log(msg.api)
         if (api === "lock") {
             if(msg.data){
-                if (msg.data.secretKey){
+                if (msg.data.secretKey) {
                     controlLock.takeControl(msg.data.secretKey, ws)
                     .then((jwtMsg) => {
                         console.log(jwtMsg)
@@ -19,6 +20,18 @@ export function processMessage(msgString: string, ws: WebSocket, controlSocket: 
                         }
                     )
                 }
+            }
+        }
+        if(api === "requestControlTransfer") {
+            if(msg.data){
+                if (msg.data.secretKey && msg.data.name) {
+                    controlLock.requestControlTransfer(msg.data.secretKey,msg.data.name,ws)
+                }
+            }
+        }
+        if(api === "transferControl") {
+            if(msg.data){
+                
             }
         }
         if (api === "unlock") {

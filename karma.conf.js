@@ -7,7 +7,6 @@ module.exports = function(config) {
   
   
       files: [
-        'src/tests/*.js',
         'src/tests/*.ts'
       ],
   
@@ -38,7 +37,7 @@ module.exports = function(config) {
   
       colors: true,
       
-      logLevel: config.LOG_DISABLE,
+      logLevel: config.LOG_DEBUG,
   
   
       autoWatch: true,

@@ -1,5 +1,4 @@
 import { ControlLock } from './logic/ControlLock';
-import { WSMessage } from './models/wsMessage';
 import express from 'express';
 import * as http from 'http';
 import * as WebSocket from 'ws';
