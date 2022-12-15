@@ -5,7 +5,10 @@ import bcrypt from 'bcrypt';
 import { Watchdog } from 'watchdog'
 import { Queue } from 'queue-typescript';
 import { ControlTransferObject } from '../models/Interfaces';
-import { WSControlTransferResponse } from '../models/wsInterfaces';
+import { WSControlTransferResponse } from '../models/WSMessageInterfaces';
+import { WebSocketManager } from '../models/WebSocketManager';
+import * as WebSocket from 'ws';
+import { WSConnection } from '../models/WSConnection';
 
 export class ControlLock {
     isLocked: boolean = false;
@@ -16,11 +19,23 @@ export class ControlLock {
     private dog!: Watchdog;
     private watchDogSleep: boolean = false;
     private requesters: ControlTransferObject[] = [];
+    private currentController!: WSConnection;
 
-    async takeControl(secretKey: string, socket: any, force?: boolean) {
+    async takeControl(secretKey: string, webSocketManager: WebSocketManager, socket: any, force?: boolean) {
         let success: boolean = false;
         if (this.isLocked == false || force === true) {
             this.isLocked = true;
+            const controller = webSocketManager.findClientBySocket(socket);
+            const oldController = webSocketManager.findCurrentController();
+            if(controller) {
+                if(oldController) {
+                    oldController.hasControl = false;
+                }
+                controller.hasControl = true;
+                this.currentController = controller;
+            } else{
+                success = false;
+            }
             this.password = generator.generate({
                 length: 20,
                 numbers: true,
@@ -53,6 +68,7 @@ export class ControlLock {
                 success,
                 interfaceType: "WSJwtReply"
             }
+            
         } else {
             return {
                 jwt: "", // 
@@ -66,29 +82,46 @@ export class ControlLock {
         @param name: name of the requesting user that gets displayed to the user in control
         @param secretKey: key for new jwt token generation
     */
-    async requestControlTransfer(secretKey: string, name: string, socket: any) {
-        let identifier = generator.generate({
-            length: 20,
-            numbers: true,
-            symbols: true
-        });
-        let controlTransferObject: ControlTransferObject = {
-            secretKey,
-            name,
-            identifier
-        };
-        this.requesters.push(controlTransferObject);
-        socket.send(JSON.stringify({
-            success: true,
-            identifier,
-            interfaceType: "WSRequestControlTransfer"
-        }));
+    async requestControlTransfer(webSocketManager: WebSocketManager, secretKey: string, name: string, socket: WebSocket) {
+        const identifier = webSocketManager.findIdentifierBySocket(socket);
+        console.log("incoming control request for: ", JSON.stringify(identifier));
+        if(identifier) {
+            let controlTransferObject: ControlTransferObject = {
+                secretKey,
+                name,
+                identifier
+            };
+            this.requesters.push(controlTransferObject);
+            if(this.currentController){
+                this.currentController.socket.send(JSON.stringify({
+                    success: true,
+                    name,
+                    identifier,
+                    interfaceType: "WSRequestControlTransferToClient"
+                }));
+            } else{
+                socket.send(JSON.stringify({
+                    success: false,
+                    name,
+                    undefined,
+                    interfaceType: "WSRequestControlTransferToClient"
+                }))
+            }
+        } else {
+            socket.send(JSON.stringify({
+                success: false,
+                name,
+                undefined,
+                interfaceType: "WSRequestControlTransferToClient"
+            }))
+        }
     }
 
-    transferControlTransfer(data: WSControlTransferResponse) {
-        let newController: ControlTransferObject | undefined = this.requesters.find(requester => requester.identifier === data.identifier)
-        if (newController) {
-            this.takeControl(newController.secretKey, socket, true)
+    transferControlTransfer(jwt: string, identifier: string, webSocketManager: WebSocketManager) {
+        let newController: ControlTransferObject | undefined = this.requesters.find(requester => requester.identifier === identifier)
+        const client = webSocketManager.findClientByIdentifier(identifier);
+        if (newController && client) {
+            this.takeControl(newController.secretKey, webSocketManager, client.socket, true)
         }
     }
 

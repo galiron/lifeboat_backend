@@ -1,10 +1,11 @@
-import { ControlSocket } from './ControllsSocket';
-import { WSAPIMessage } from "../models/wsInterfaces";
+import { ControlSocket } from '../models/ControllsSocket';
+import { WSAPIMessage } from "../models/WSMessageInterfaces";
 import { ControlLock } from "./ControlLock";
 import * as WebSocket from 'ws';
+import { WebSocketManager } from '../models/WebSocketManager';
 
 // function that handles API calls
-export function processMessage(msgString: string, ws: WebSocket, controlSocket: ControlSocket, controlLock: ControlLock){
+export function processMessage(msgString: string, webSocketManager: WebSocketManager, ws: WebSocket, controlSocket: ControlSocket, controlLock: ControlLock){
     const msg: WSAPIMessage = JSON.parse(msgString);
     if (msg){
         //TODO: lock release feedback
@@ -13,7 +14,7 @@ export function processMessage(msgString: string, ws: WebSocket, controlSocket: 
         if (api === "lock") {
             if(msg.data){
                 if (msg.data.secretKey) {
-                    controlLock.takeControl(msg.data.secretKey, ws)
+                    controlLock.takeControl(msg.data.secretKey, webSocketManager, ws)
                     .then((jwtMsg) => {
                         console.log(jwtMsg)
                          ws.send(JSON.stringify(jwtMsg));
@@ -24,14 +25,23 @@ export function processMessage(msgString: string, ws: WebSocket, controlSocket: 
         }
         if(api === "requestControlTransfer") {
             if(msg.data){
-                if (msg.data.secretKey && msg.data.name) {
-                    controlLock.requestControlTransfer(msg.data.secretKey,msg.data.name,ws)
+                console.log(msg.data)
+                if (msg.data.name) {
+                    controlLock.requestControlTransfer(webSocketManager, msg.data.secretKey, msg.data.name, ws)
                 }
             }
         }
         if(api === "transferControl") {
             if(msg.data){
-                
+                if(msg.data.jwt && msg.data.identifier) {
+                    controlLock.transferControlTransfer(msg.data.jwt, msg.data.identifier, webSocketManager)
+                } else {
+                    ws.send(JSON.stringify({
+                            jwt: "", // 
+                            success: false,
+                            interfaceType: "WSJwtReply"
+                    }));
+                }
             }
         }
         if (api === "unlock") {

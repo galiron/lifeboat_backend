@@ -3,9 +3,9 @@ import express from 'express';
 import * as http from 'http';
 import * as WebSocket from 'ws';
 import { AddressInfo } from 'net';
-import { io } from "socket.io-client";
-import { ControlSocket } from './logic/ControllsSocket';
+import { ControlSocket } from './models/ControllsSocket';
 import { processMessage } from './logic/WebsocketApi';
+import { WebSocketManager } from './models/WebSocketManager';
 
 const app = express();
 
@@ -18,12 +18,17 @@ const server = http.createServer(app);
 const controlSocket = new ControlSocket();
 // initialize the WebSocket server instance
 const wss = new WebSocket.Server({ server });
+const webSocketManager: WebSocketManager = new WebSocketManager();
 
 wss.on('connection', (ws: WebSocket) => {
-
 		ws.on('message', (msgString: string) => {
 			// outsourced the functionality for better testability
-			processMessage(msgString, ws, controlSocket, controlLock)
+			processMessage(msgString, webSocketManager, ws, controlSocket, controlLock)
+		});
+
+		ws.on('disconnect', () => {
+			// outsourced the functionality for better testability
+			webSocketManager.removeClient(ws);
 		});
 });
 
