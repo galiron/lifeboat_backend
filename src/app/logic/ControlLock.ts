@@ -1,3 +1,4 @@
+import { Server } from 'socket.io';
 import { Request, Response } from 'express';
 import jwt, { Secret, JwtPayload } from 'jsonwebtoken';
 import generator from 'generate-password-ts';
@@ -21,11 +22,11 @@ export class ControlLock {
     private requesters: ControlTransferObject[] = [];
     private currentController!: WSConnection;
 
-    async takeControl(secretKey: string, webSocketManager: WebSocketManager, socket: any, force?: boolean) {
+    async takeControl(secretKey: string, webSocketManager: WebSocketManager, socketId: string, force?: boolean) {
         let success: boolean = false;
         if (this.isLocked == false || force === true) {
             this.isLocked = true;
-            const controller = webSocketManager.findClientBySocket(socket);
+            const controller: WSConnection | undefined = webSocketManager.findClientBySocketId(socketId);
             const oldController = webSocketManager.findCurrentController();
             if(controller) {
                 if(oldController) {
@@ -47,33 +48,34 @@ export class ControlLock {
             success = true;
             // check if old watchdog messes around with new one
             this.dog = new Watchdog(2200) // 2.2 sec
-            this.dog.on('reset', () => { this.dog.sleep() })
-            this.dog.on('feed', () => {})
+            this.dog.on('reset', () => { this.dog.sleep(); })
+            this.dog.on('feed', () => { })
             this.dog.on('sleep', () => {
                 this.watchDogSleep = true;
                 this.isLocked = false;
-                socket.send(JSON.stringify({
+                webSocketManager.emitMessage(socketId, "WSConnectionTerminated", {
                     success: true,
                     interfaceType: "WSConnectionTerminated"
-                }));
+                })
             })
             this.dog.feed({
                 data:    'delicious',
                 timeout: 2200,
               })
               this.watchDogSleep = false;
-            this.watchDogPoll(socket);
+            this.watchDogPoll(socketId, webSocketManager);
+            console.log("control assigned to: ", this.controllerToken)
             return {
                 jwt: this.controllerToken, // 
                 success,
-                interfaceType: "WSJwtReply"
+                interfaceType: "WSControlAssignment"
             }
             
         } else {
             return {
                 jwt: "", // 
                 success,
-                interfaceType: "WSJwtReply"
+                interfaceType: "WSControlAssignment"
             }
         }
     };
@@ -82,8 +84,9 @@ export class ControlLock {
         @param name: name of the requesting user that gets displayed to the user in control
         @param secretKey: key for new jwt token generation
     */
-    async requestControlTransfer(webSocketManager: WebSocketManager, secretKey: string, name: string, socket: WebSocket) {
-        const identifier = webSocketManager.findIdentifierBySocket(socket);
+    async requestControlTransfer(webSocketManager: WebSocketManager, secretKey: string, name: string, server: Server, socketId: string) {
+        const identifier = webSocketManager.findIdentifierBySocketId(socketId);
+        console.log("identifier", identifier)
         console.log("incoming control request for: ", JSON.stringify(identifier));
         if(identifier) {
             let controlTransferObject: ControlTransferObject = {
@@ -93,27 +96,32 @@ export class ControlLock {
             };
             this.requesters.push(controlTransferObject);
             if(this.currentController){
-                this.currentController.socket.send(JSON.stringify({
+                console.log("request going to: ", this.currentController.socketId)
+                console.log("request from to: ", socketId)
+                const data = {
                     success: true,
                     name,
                     identifier,
                     interfaceType: "WSRequestControlTransferToClient"
-                }));
+                }
+                webSocketManager.emitMessage(this.currentController.socketId, "WSRequestControlTransferToClient", data);
             } else{
-                socket.send(JSON.stringify({
+                const data = {
                     success: false,
                     name,
                     undefined,
                     interfaceType: "WSRequestControlTransferToClient"
-                }))
+                }
+                webSocketManager.emitMessage(socketId, "WSRequestControlTransferToClient", data);
             }
         } else {
-            socket.send(JSON.stringify({
+            const data = {
                 success: false,
                 name,
                 undefined,
                 interfaceType: "WSRequestControlTransferToClient"
-            }))
+            }
+            webSocketManager.emitMessage(socketId, "WSRequestControlTransferToClient", data);
         }
     }
 
@@ -121,28 +129,23 @@ export class ControlLock {
         let newController: ControlTransferObject | undefined = this.requesters.find(requester => requester.identifier === identifier)
         const client = webSocketManager.findClientByIdentifier(identifier);
         if (newController && client) {
-            this.takeControl(newController.secretKey, webSocketManager, client.socket, true)
+            this.takeControl(newController.secretKey, webSocketManager, client.socketId, true)
         }
     }
 
-    watchDogPoll(socket: any){
+    watchDogPoll(socketId: string, webSocketManager: WebSocketManager){
         if(this.watchDogSleep == false){
-            this.requestDogFood(socket)
+            this.requestDogFood(socketId, webSocketManager)
             setTimeout(() => {
-                this.watchDogPoll(socket)
+                this.watchDogPoll(socketId, webSocketManager)
             }, 1000);
         } 
     }
 
-    requestDogFood(socket: any) : any{
-        // socket.emit("WSFeedDogRequest", {
-        //     success: true,
-        //     interfaceType: "WSFeedDogRequest"
-        // })
-        socket.send(JSON.stringify({
-            success: true,
+    requestDogFood(socketId: string, webSocketManager: WebSocketManager) : any{
+        webSocketManager.emitMessage(socketId, "WSFeedDogRequest", {
             interfaceType: "WSFeedDogRequest"
-        }))
+        })
     }
 
     feedWatchdog(clientToken: string){

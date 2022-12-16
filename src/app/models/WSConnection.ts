@@ -5,9 +5,9 @@ export class WSConnection {
     hasControl: boolean;
     private identity: string;
     jwt?: string;
-    socket: WebSocket;
+    socketId: string;
 
-    constructor(socket: WebSocket){
+    constructor(socketId: string){
         this.hasControl = false;
         this.identity = generator.generate({
             length: 20,
@@ -15,7 +15,7 @@ export class WSConnection {
             symbols: true
         });
         this.jwt = undefined;
-        this.socket = socket;
+        this.socketId = socketId;
     }
 
     getIdentity () : string {

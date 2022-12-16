@@ -4,6 +4,14 @@ export interface WSMessage {
     interfaceType: string;
 }
 
+export interface WSLockRequest extends WSMessage {
+    secretKey: string;
+}
+
+export interface WSErrorResponse extends WSMessageResponse {
+    errorMessage: string;
+}
+
 export interface WSAPIMessage extends WSMessage{
     api: string;
     data: any;
@@ -15,6 +23,9 @@ export interface WSMessageResponse extends WSMessage{
 
 export interface WSJwtResponse extends WSMessageResponse{
     jwt: string;
+}
+
+export interface WSControlAssignment extends WSJwtResponse{
 }
 
 export interface WSJwtMessage extends WSMessage{
@@ -40,6 +51,14 @@ export interface WSThrottleRequest extends WSJwtMessage{
     instruction: Instruction
 }
 
+export interface WSSelectRequest extends WSJwtMessage{
+    instruction: Instruction
+}
+
+export interface WSShifttRequest extends WSJwtMessage{
+    instruction: Instruction
+}
+
 export interface WSSteeringRequest extends WSJwtMessage{
     instruction: Instruction
 }
@@ -49,7 +68,8 @@ export interface WSControlTransferResponse extends WSJwtResponse{
 }
 
 export interface WSRequestControlTransferToBackend extends WSMessage{
-    name: string
+    name: string;
+    secretKey: string;
 }
 
 export interface WSRequestControlTransferToClient extends WSMessage{
@@ -63,8 +83,9 @@ export interface WSRequestControlTransferToClient extends WSMessage{
    that gets send! Make sure to not use the wrong interfaceName for the
    belonging data on the backend !!! */
 export function messageIsOfInterface(message: any, interfaceName: string){
-    if(message){
-        if(message.interfaceType == interfaceName){
+    const parsedMessage = JSON.parse(message)
+    if(parsedMessage){
+        if(parsedMessage.interfaceType == interfaceName){
             return true;
         }
     }
