@@ -50,6 +50,16 @@ export function transferControl(data: WSControlTransferResponse, webSocketManage
         console.log(err)
     }
 }
+export function transferControlDeclined(data: WSControlTransferResponse, webSocketManager: WebSocketManager, controlLock: ControlLock, server: Server, socketId: string) {
+    try {
+        if (data.jwt && data.identifier){
+            controlLock.transferControlDeclined(data.jwt, data.identifier, webSocketManager)
+        } else {
+        }
+    } catch(err: any){
+        console.log(err)
+    }
+}
 export function unlock(data: WSJwtMessage, webSocketManager: WebSocketManager, controlLock: ControlLock, server: Server, socketId: string) {
     try { 
         if (data.jwt){

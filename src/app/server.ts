@@ -4,7 +4,7 @@ import * as http from 'http';
 import * as WebSocket from 'ws';
 import { AddressInfo } from 'net';
 import { ControlSocket } from './models/ControllsSocket';
-import { feedWatchdog, lock, processMessage, requestControlTransfer, select, shift, steer, throttle, transferControl, unlock } from './logic/WebsocketApi';
+import { feedWatchdog, lock, processMessage, requestControlTransfer, select, shift, steer, throttle, transferControl, transferControlDeclined, unlock } from './logic/WebsocketApi';
 import { WebSocketManager } from './models/WebSocketManager';
 import { Server } from "socket.io"
 
@@ -27,6 +27,7 @@ const io = new Server(server, {
 const webSocketManager: WebSocketManager = new WebSocketManager(io);
 
 io.on("connection", (socket) => {
+	webSocketManager.addClient(socket.id);
 	console.log("connected, current controller = ", controlLock.controllerToken)
 	socket.on("lock", (msg) => {
 		console.log("received")
@@ -41,7 +42,11 @@ io.on("connection", (socket) => {
 	socket.on("transferControl", (msg) => {
 		transferControl(msg, webSocketManager, controlLock, io, socket.id)
 	});
+	socket.on("transferControlDeclined", (msg) => {
+		transferControlDeclined(msg, webSocketManager, controlLock, io, socket.id)
+	});
 	socket.on("feedWatchdog", (msg) => {
+		console.log("REEEE FEEED", msg)
 		feedWatchdog(msg, webSocketManager, controlLock, io, socket.id)
 	});
 	socket.on("select", (msg) => {
