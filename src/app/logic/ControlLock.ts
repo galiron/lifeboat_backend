@@ -85,7 +85,6 @@ export class ControlLock {
     */
     async requestControlTransfer(webSocketManager: WebSocketManager, secretKey: string, name: string, server: Server, socketId: string) {
         const identifier = webSocketManager.findIdentifierBySocketId(socketId);
-        //console.log("incoming control request for: ", JSON.stringify(identifier));
         if(identifier) {
             let controlTransferObject: ControlTransferObject = {
                 secretKey,
@@ -148,9 +147,8 @@ export class ControlLock {
     }
 
     watchDogPoll(webSocketManager: WebSocketManager, controllerToken: string){
-        if(this.controllerToken === controllerToken){
+        if(this.requestIsAllowed(webSocketManager, controllerToken)){
             this.requestDogFood(this.currentController.socketId, webSocketManager)
-            console.log("controller is currently:", controllerToken)
             setTimeout(() => {
                 this.watchDogPoll(webSocketManager, controllerToken)
             }, 1000);
@@ -163,13 +161,17 @@ export class ControlLock {
         })
     }
 
-    feedWatchdog(clientToken: string){
+    requestIsAllowed(webSocketManager: WebSocketManager, jwtToken: string){
+        return this.controllerToken === jwtToken && this.currentController.socketId === webSocketManager.findCurrentController()?.socketId
+    }
+
+    feedWatchdog(webSocketManager: WebSocketManager, clientToken: string){
         let success: boolean = false;
         try {
             console.log("requesters: ", this.requesters.length)
             console.log("clientToken", clientToken)
             console.log("this.controllerToken", this.controllerToken)
-            if(clientToken == this.controllerToken){
+            if(this.requestIsAllowed(webSocketManager, clientToken)){
                 console.log("surebru2")
                 var decoded = jwt.verify(clientToken, this.secretKey);
                 success = true;

@@ -30,7 +30,6 @@ io.on("connection", (socket) => {
 	webSocketManager.addClient(socket.id);
 	console.log("connected, current controller = ", controlLock.controllerToken)
 	socket.on("lock", (msg) => {
-		console.log("received")
 		lock(msg, webSocketManager, controlLock, socket.id)
 	});
 	socket.on("unlock", (msg) => {
@@ -46,7 +45,6 @@ io.on("connection", (socket) => {
 		transferControlDeclined(msg, webSocketManager, controlLock, io, socket.id)
 	});
 	socket.on("feedWatchdog", (msg) => {
-		console.log("REEEE FEEED", msg)
 		feedWatchdog(msg, webSocketManager, controlLock, io, socket.id)
 	});
 	socket.on("select", (msg) => {
