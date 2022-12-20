@@ -4,7 +4,7 @@ import * as http from 'http';
 import * as WebSocket from 'ws';
 import { AddressInfo } from 'net';
 import { ControlSocket } from './models/ControllsSocket';
-import { feedWatchdog, lock, processMessage, requestControlTransfer, select, shift, steer, throttle, transferControl, transferControlDeclined, unlock } from './logic/WebsocketApi';
+import { feedVigilanceControl, feedWatchdog, lock, processMessage, requestControlTransfer, select, shift, steer, throttle, transferControl, transferControlDeclined, unlock } from './logic/WebsocketApi';
 import { WebSocketManager } from './models/WebSocketManager';
 import { Server } from "socket.io"
 
@@ -46,6 +46,9 @@ io.on("connection", (socket) => {
 	});
 	socket.on("feedWatchdog", (msg) => {
 		feedWatchdog(msg, webSocketManager, controlLock, io, socket.id)
+	});
+	socket.on("feedVigilanceControl", (msg) => {
+		feedVigilanceControl(msg, webSocketManager, controlLock, io, socket.id)
 	});
 	socket.on("select", (msg) => {
 		select(msg, webSocketManager, controlSocket, controlLock, io, socket.id)

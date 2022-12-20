@@ -80,6 +80,15 @@ export function feedWatchdog(data: WSJwtMessage, webSocketManager: WebSocketMana
         console.log(err)
     }
 }
+export function feedVigilanceControl(data: WSJwtMessage, webSocketManager: WebSocketManager, controlLock: ControlLock, server: Server, socketId: string) {
+    try {
+        if (data.jwt){
+            controlLock.getTimeoutManager().feedVigilanceControl(webSocketManager, data.jwt, controlLock)
+        }
+    } catch(err: any){
+        console.log(err)
+    }
+}
 export function select(data: WSSelectRequest, webSocketManager: WebSocketManager,controlSocket: ControlSocket, controlLock: ControlLock, server: Server, socketId: string) {
     try {
         if (data.jwt && data.instruction){

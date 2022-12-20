@@ -77,8 +77,8 @@ export class ControlLock {
             this.secretKey = secretKey;
             success = true;
             // check if old watchdog messes around with new one
-            this.timeoutManager.setupWatchdog();
-            this.timeoutManager.watchDogPoll(webSocketManager, String(this.controllerToken), this);
+            this.timeoutManager.setupWatchdog(webSocketManager, String(this.controllerToken), this);
+            this.timeoutManager.setupVigilanceControl();
             console.log("control assigned to: ", this.controllerToken)
             return {
                 jwt: this.controllerToken, // 
