@@ -26,6 +26,7 @@
     "generate-password-ts": "^1.6.3",
     "jsonwebtoken": "^8.5.1",
     "queue-typescript": "^1.0.1",
+    "rxjs": "^7.8.0",
     "socket.io": "^4.5.4",
     "socket.io-client": "^4.5.4",
     "watchdog": "^0.8.17"

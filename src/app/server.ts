@@ -28,7 +28,7 @@ const webSocketManager: WebSocketManager = new WebSocketManager(io);
 
 io.on("connection", (socket) => {
 	webSocketManager.addClient(socket.id);
-	console.log("connected, current controller = ", controlLock.controllerToken)
+	console.log("connected, current controller = ", controlLock.getControllerToken())
 	socket.on("lock", (msg) => {
 		lock(msg, webSocketManager, controlLock, socket.id)
 	});

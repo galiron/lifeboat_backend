@@ -10,16 +10,46 @@ import { WSControlTransferResponse } from '../models/WSMessageInterfaces';
 import { WebSocketManager } from '../models/WebSocketManager';
 import * as WebSocket from 'ws';
 import { WSConnection } from '../models/WSConnection';
+import { TimeoutManager } from '../models/TimeoutManager';
+import { requestIsAllowed } from '../utils/helpers';
 
 export class ControlLock {
     isLocked: boolean = false;
-    controllerToken: string | undefined = '';
+    private controllerToken: string | undefined = '';
     private saltRounds = 9;
     private password = "";
     private secretKey = "";
-    private dog: Watchdog |undefined;
+    private timeoutManager = new TimeoutManager();
     private requesters: ControlTransferObject[] = [];
     private currentController!: WSConnection;
+    constructor(){
+        this.timeoutManager.isLocked$.subscribe((isLocked) => {
+            this.isLocked = isLocked;
+        });
+        this.timeoutManager.controllerToken$.subscribe((controllerToken) => {
+            this.controllerToken = controllerToken;
+        });
+    }
+
+    getControllerToken(): string{
+        return String(this.controllerToken);
+    }
+    
+    getCurrentController(): WSConnection{
+        return new WSConnection(
+            this.currentController.socketId,
+            this.currentController.hasControl,
+            this.currentController.getIdentity(),
+             this.currentController.jwt)
+    }
+
+    getSecretKey(){
+        return String(this.secretKey)
+    }
+
+    getTimeoutManager(): TimeoutManager{
+        return this.timeoutManager
+    }
 
     async takeControl(secretKey: string, webSocketManager: WebSocketManager, socketId: string, force?: boolean) {
         let success: boolean = false;
@@ -47,22 +77,8 @@ export class ControlLock {
             this.secretKey = secretKey;
             success = true;
             // check if old watchdog messes around with new one
-            if(this.dog) {
-                this.dog.removeAllListeners()
-                this.dog = undefined;
-            }
-            this.dog = new Watchdog(2200) // 2.2 sec
-            this.dog.on('reset', () => { this.dog!.sleep(); })
-            this.dog.on('feed', () => { })
-            this.dog.on('sleep', () => {
-                this.isLocked = false;
-                this.controllerToken = undefined;
-            })
-            this.dog.feed({
-                data:    'delicious',
-                timeout: 2200,
-            })
-            this.watchDogPoll(webSocketManager, String(this.controllerToken));
+            this.timeoutManager.setupWatchdog();
+            this.timeoutManager.watchDogPoll(webSocketManager, String(this.controllerToken), this);
             console.log("control assigned to: ", this.controllerToken)
             return {
                 jwt: this.controllerToken, // 
@@ -146,49 +162,6 @@ export class ControlLock {
         }
     }
 
-    watchDogPoll(webSocketManager: WebSocketManager, controllerToken: string){
-        if(this.requestIsAllowed(webSocketManager, controllerToken)){
-            this.requestDogFood(this.currentController.socketId, webSocketManager)
-            setTimeout(() => {
-                this.watchDogPoll(webSocketManager, controllerToken)
-            }, 1000);
-        } 
-    }
-
-    requestDogFood(socketId: string, webSocketManager: WebSocketManager) : any{
-        webSocketManager.emitMessage(socketId, "WSFeedDogRequest", {
-            interfaceType: "WSFeedDogRequest"
-        })
-    }
-
-    requestIsAllowed(webSocketManager: WebSocketManager, jwtToken: string){
-        return this.controllerToken === jwtToken && this.currentController.socketId === webSocketManager.findCurrentController()?.socketId
-    }
-
-    feedWatchdog(webSocketManager: WebSocketManager, clientToken: string){
-        let success: boolean = false;
-        try {
-            console.log("requesters: ", this.requesters.length)
-            console.log("clientToken", clientToken)
-            console.log("this.controllerToken", this.controllerToken)
-            if(this.requestIsAllowed(webSocketManager, clientToken)){
-                console.log("surebru2")
-                var decoded = jwt.verify(clientToken, this.secretKey);
-                success = true;
-                this.dog?.feed({
-                    data:    'delicious',
-                    timeout: 2200,
-                  })
-                // console.log(decoded)
-            } else {
-                console.log("client: is not allowed to feed: ", clientToken)
-                console.log("only allowed client is:  ", this.controllerToken)
-            }
-        } catch(err) {
-            console.log(err)
-        }
-    }
-
     releaseControl(clientToken: string) {
         let success: boolean = false;
         console.log("request from to: ", clientToken)
@@ -196,7 +169,7 @@ export class ControlLock {
             var decoded = jwt.verify(clientToken, this.secretKey);
             this.isLocked = false;
             success = true;
-            this.dog?.sleep();
+            this.timeoutManager.dog?.sleep();
             console.log(decoded)
         } catch(err) {
             console.log(err)
@@ -216,8 +189,4 @@ export class ControlLock {
             return false;
         }
     }
-
-
-
-
 }

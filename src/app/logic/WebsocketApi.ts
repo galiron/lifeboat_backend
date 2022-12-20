@@ -74,7 +74,7 @@ export function unlock(data: WSJwtMessage, webSocketManager: WebSocketManager, c
 export function feedWatchdog(data: WSJwtMessage, webSocketManager: WebSocketManager, controlLock: ControlLock, server: Server, socketId: string) {
     try {
         if (data.jwt){
-            controlLock.feedWatchdog(webSocketManager, data.jwt)
+            controlLock.getTimeoutManager().feedWatchdog(webSocketManager, data.jwt, controlLock)
         }
     } catch(err: any){
         console.log(err)
