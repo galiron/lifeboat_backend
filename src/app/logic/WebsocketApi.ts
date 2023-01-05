@@ -26,7 +26,16 @@ export function lock(data: WSLockRequest, webSocketManager: WebSocketManager, co
 export function requestControlTransfer(data: WSRequestControlTransferToBackend, webSocketManager: WebSocketManager, controlLock: ControlLock, server: Server, socketId: string){
     try {
         if (data.name && data.secretKey) {
-            controlLock.requestControlTransfer(webSocketManager, data.secretKey, data.name, server, socketId)
+            if(controlLock.getCurrentController()?.hasControl === true){
+                controlLock.requestControlTransfer(webSocketManager, data.secretKey, data.name, server, socketId)
+            } else {
+                controlLock.takeControl(data.secretKey, webSocketManager, socketId)
+                .then((jwtMsg) => {
+                    console.log(jwtMsg)
+                    webSocketManager.emitMessage(socketId, "WSControlAssignment", jwtMsg);
+                    }
+                )       
+            }
         } else {
             console.log("data expected format of WSControlTransferResponse, found data is: ", data)
         }

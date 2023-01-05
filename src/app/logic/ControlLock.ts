@@ -35,12 +35,16 @@ export class ControlLock {
         return String(this.controllerToken);
     }
     
-    getCurrentController(): WSConnection{
-        return new WSConnection(
-            this.currentController.socketId,
-            this.currentController.hasControl,
-            this.currentController.getIdentity(),
-             this.currentController.jwt)
+    getCurrentController(): WSConnection | undefined{
+        if (this.currentController){
+            return new WSConnection(
+                this.currentController.socketId,
+                this.currentController.hasControl,
+                this.currentController.getIdentity(),
+                this.currentController.jwt)
+        } else {
+            return undefined
+        }
     }
 
     getSecretKey(){

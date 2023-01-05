@@ -57,17 +57,19 @@ export class TimeoutManager {
 
     watchDogPoll(webSocketManager: WebSocketManager, initializedToken: string, controlLock: ControlLock){
         if(requestIsAllowed(webSocketManager, controlLock.getCurrentController(), controlLock.getControllerToken(), initializedToken)){
-            this.requestDogFood(controlLock.getCurrentController().socketId, webSocketManager)
+            this.requestDogFood(controlLock.getCurrentController()?.socketId, webSocketManager)
             setTimeout(() => {
                 this.watchDogPoll(webSocketManager, initializedToken, controlLock)
             }, 1000);
         } 
     }
 
-    requestDogFood(socketId: string, webSocketManager: WebSocketManager) : any{
-        webSocketManager.emitMessage(socketId, "WSFeedDogRequest", {
-            interfaceType: "WSFeedDogRequest"
-        })
+    requestDogFood(socketId: string | undefined, webSocketManager: WebSocketManager) : any{
+        if (socketId) {
+            webSocketManager.emitMessage(socketId, "WSFeedDogRequest", {
+                interfaceType: "WSFeedDogRequest"
+            })
+        }
     }
 
     private feedTimer(webSocketManager: WebSocketManager, clientToken: string, controlLock: ControlLock, watchdog: Watchdog | undefined, timeoutTime: number){
