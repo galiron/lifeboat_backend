@@ -15,7 +15,6 @@ import { requestIsAllowed } from '../utils/helpers';
 
 export class ControlLock {
     isLocked: boolean = false;
-    private controllerToken: string | undefined = '';
     private saltRounds = 9;
     private password = "";
     private secretKey = "";
@@ -26,25 +25,18 @@ export class ControlLock {
         this.timeoutManager.isLocked$.subscribe((isLocked) => {
             this.isLocked = isLocked;
         });
-        this.timeoutManager.controllerToken$.subscribe((controllerToken) => {
-            this.controllerToken = controllerToken;
+        this.timeoutManager.revokeControllerRights$.subscribe(() => {
+            this.currentController.jwt = undefined;
+            this.currentController.hasControl = false;
         });
     }
 
     getControllerToken(): string{
-        return String(this.controllerToken);
+        return String(this.currentController?.jwt);
     }
     
     getCurrentController(): WSConnection | undefined{
-        if (this.currentController){
-            return new WSConnection(
-                this.currentController.socketId,
-                this.currentController.hasControl,
-                this.currentController.getIdentity(),
-                this.currentController.jwt)
-        } else {
-            return undefined
-        }
+        return this.currentController
     }
 
     getSecretKey(){
@@ -77,15 +69,15 @@ export class ControlLock {
                 symbols: true
             });
             this.password = await bcrypt.hash(this.password, this.saltRounds);
-            this.controllerToken = jwt.sign(this.password, secretKey);
+            this.currentController.jwt = jwt.sign(this.password, secretKey);
             this.secretKey = secretKey;
             success = true;
             // check if old watchdog messes around with new one
-            this.timeoutManager.setupWatchdog(webSocketManager, String(this.controllerToken), this);
-            this.timeoutManager.setupVigilanceControl();
-            console.log("control assigned to: ", this.controllerToken)
+            this.timeoutManager.setupWatchdog(webSocketManager, String(this.currentController.jwt), this);
+            this.timeoutManager.setupVigilanceControl(webSocketManager);
+            console.log("control assigned to: ", this.currentController.jwt)
             return {
-                jwt: this.controllerToken, // 
+                jwt: this.currentController.jwt, // 
                 success,
                 interfaceType: "WSControlAssignment"
             }

@@ -1,7 +1,7 @@
 import { Instruction } from './../models/Interfaces';
 import { Server } from 'socket.io';
 import { ControlSocket } from '../models/ControllsSocket';
-import { messageIsOfInterface, WSAPIMessage, WSControlTransferResponse, WSJwtMessage, WSLockReleaseResponse, WSLockRequest, WSRequestControlTransferToBackend, WSSelectRequest, WSShifttRequest, WSSteeringRequest, WSThrottleRequest } from "../models/WSMessageInterfaces";
+import { messageIsOfInterface, WSAPIMessage, WSControlTransferResponse, WSJwtMessage, WSLockReleaseResponse, WSLockRequest, WSRequestControlTransferToBackend, WSSelectRequest, WSShifttRequest, WSSteeringRequest, WSThrottleRequest, WSVigilanceFeedResponse } from "../models/WSMessageInterfaces";
 import { ControlLock } from "./ControlLock";
 import * as WebSocket from 'ws';
 import { WebSocketManager } from '../models/WebSocketManager';
@@ -83,7 +83,9 @@ export function unlock(data: WSJwtMessage, webSocketManager: WebSocketManager, c
 export function feedWatchdog(data: WSJwtMessage, webSocketManager: WebSocketManager, controlLock: ControlLock, server: Server, socketId: string) {
     try {
         if (data.jwt){
-            controlLock.getTimeoutManager().feedWatchdog(webSocketManager, data.jwt, controlLock)
+            controlLock.getTimeoutManager().feedWatchdog(webSocketManager, data.jwt, controlLock).catch((err) => {
+                console.log(err);
+            })
         }
     } catch(err: any){
         console.log(err)
@@ -92,7 +94,15 @@ export function feedWatchdog(data: WSJwtMessage, webSocketManager: WebSocketMana
 export function feedVigilanceControl(data: WSJwtMessage, webSocketManager: WebSocketManager, controlLock: ControlLock, server: Server, socketId: string) {
     try {
         if (data.jwt){
-            controlLock.getTimeoutManager().feedVigilanceControl(webSocketManager, data.jwt, controlLock)
+            controlLock.getTimeoutManager().feedVigilanceControl(webSocketManager, data.jwt, controlLock).then(() => {
+                let responseData: WSVigilanceFeedResponse = {
+                    success: true,
+                    interfaceType: "WSVigilanceFeedResponse"
+                }
+                webSocketManager.emitMessage(socketId, "WSVigilanceFeedResponse", responseData);
+            }).catch((err) => {
+                console.log(err);
+            })
         }
     } catch(err: any){
         console.log(err)

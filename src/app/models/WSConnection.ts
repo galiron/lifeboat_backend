@@ -4,7 +4,7 @@ import generator from 'generate-password-ts';
 export class WSConnection {
     hasControl: boolean;
     private identity: string;
-    jwt?: string;
+    jwt: string | undefined;
     socketId: string;
 
     constructor(socketId: string, hasControl?: boolean, identity?: string, jwt?: string){

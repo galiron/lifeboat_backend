@@ -12,6 +12,10 @@ export interface WSErrorResponse extends WSMessageResponse {
     errorMessage: string;
 }
 
+export interface WSVigilanceFeedResponse extends WSMessageResponse {
+    
+}
+
 export interface WSAPIMessage extends WSMessage{
     api: string;
     data: any;

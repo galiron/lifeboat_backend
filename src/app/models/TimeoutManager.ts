@@ -9,7 +9,7 @@ export class TimeoutManager {
     dog: Watchdog | undefined;
     vigilanceControl: Watchdog | undefined;
     isLocked$: Subject<boolean> = new Subject();
-    controllerToken$: Subject<string | undefined> = new Subject();
+    revokeControllerRights$: Subject<undefined> = new Subject(); // jwt to verify if access is valid
     constructor() {
     }
 
@@ -25,7 +25,7 @@ export class TimeoutManager {
         this.dog.on('feed', () => { })
         this.dog.on('sleep', () => {
             this.isLocked$.next(false);
-            this.controllerToken$.next(undefined);
+            this.revokeControllerRights$.next(undefined);
         })
         this.dog.feed({
             data:    'delicious',
@@ -34,7 +34,7 @@ export class TimeoutManager {
         this.watchDogPoll(webSocketManager, initializedToken, controlLock);
     }
 
-    setupVigilanceControl() {
+    setupVigilanceControl(webSocketManager: WebSocketManager) {
         if(this.vigilanceControl) {
             this.vigilanceControl.removeAllListeners()
             this.vigilanceControl = undefined;
@@ -46,7 +46,15 @@ export class TimeoutManager {
         this.vigilanceControl.on('feed', () => { })
         this.vigilanceControl.on('sleep', () => {
             this.isLocked$.next(false);
-            this.controllerToken$.next(undefined);
+            let currentController = webSocketManager.findCurrentController()
+            if (currentController) {
+                const releaseMessage = {
+                    success: true,
+                    interfaceType: "WSLockReleaseResponse"
+                }
+                webSocketManager.emitMessage(currentController.socketId, "WSLockReleaseResponse", releaseMessage)
+            }
+            this.revokeControllerRights$.next(undefined);
             console.log("control released, due to inactivity")
         })
         this.vigilanceControl.feed({
@@ -72,32 +80,36 @@ export class TimeoutManager {
         }
     }
 
-    private feedTimer(webSocketManager: WebSocketManager, clientToken: string, controlLock: ControlLock, watchdog: Watchdog | undefined, timeoutTime: number){
-        let success: boolean = false;
-        try {
-            if(requestIsAllowed(webSocketManager, controlLock.getCurrentController(), controlLock.getControllerToken(), clientToken)) {
-                var decoded = jwt.verify(clientToken, controlLock.getSecretKey());
-                success = true;
-                watchdog?.feed({
-                    data:    'delicious',
-                    timeout: timeoutTime,
-                  })
-                // console.log(decoded)
-            } else {
-                console.log("client: is not allowed to feed: ", clientToken)
-                console.log("only allowed client is:  ", controlLock.getControllerToken())
+    private feedTimer(webSocketManager: WebSocketManager, clientToken: string, controlLock: ControlLock, watchdog: Watchdog | undefined, timeoutTime: number) : Promise<any>{
+        return new Promise((resolve, reject) => {
+            let success: boolean = false;
+            try {
+                if(requestIsAllowed(webSocketManager, controlLock.getCurrentController(), controlLock.getControllerToken(), clientToken)) {
+                    var decoded = jwt.verify(clientToken, controlLock.getSecretKey());
+                    success = true;
+                    watchdog?.feed({
+                        data:    'delicious',
+                        timeout: timeoutTime,
+                      })
+                    resolve("success")
+                    // console.log(decoded)
+                } else {
+                    console.log("client: is not allowed to feed: ", clientToken)
+                    console.log("only allowed client is:  ", controlLock.getControllerToken())
+                    reject(new Error("not allowed to feed"))
+                }
+            } catch(err) {
+                reject(console.log(err))
             }
-        } catch(err) {
-            console.log(err)
-        }
+        })
     }
 
-    feedWatchdog(webSocketManager: WebSocketManager, clientToken: string, controlLock: ControlLock){
-        this.feedTimer(webSocketManager, clientToken, controlLock, this.dog, 2200);
+    feedWatchdog(webSocketManager: WebSocketManager, clientToken: string, controlLock: ControlLock) : Promise<any> {
+        return this.feedTimer(webSocketManager, clientToken, controlLock, this.dog, 2200);
     }
 
-    feedVigilanceControl(webSocketManager: WebSocketManager, clientToken: string, controlLock: ControlLock) {
-        this.feedTimer(webSocketManager, clientToken, controlLock, this.vigilanceControl, 30000);
+    feedVigilanceControl(webSocketManager: WebSocketManager, clientToken: string, controlLock: ControlLock) : Promise<any> {
+        return this.feedTimer(webSocketManager, clientToken, controlLock, this.vigilanceControl, 30000);
     }
 
   }
