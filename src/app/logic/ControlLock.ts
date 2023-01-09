@@ -22,7 +22,7 @@ export class ControlLock {
     private requesters: ControlTransferObject[] = [];
     private currentController!: WSConnection;
     constructor(){
-        this.timeoutManager.isLocked$.subscribe((isLocked) => {
+        this.timeoutManager.isLocked$.subscribe((isLocked: boolean) => {
             this.isLocked = isLocked;
         });
         this.timeoutManager.revokeControllerRights$.subscribe(() => {
