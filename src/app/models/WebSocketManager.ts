@@ -11,10 +11,14 @@ export class WebSocketManager{
         this.server = socketioServer;
     }
 
-    emitMessage(socketId: string, api: string, data: any){
-        let socket = this.server.sockets.sockets.get(socketId);
-        if (socket){
-            socket.emit(api, JSON.stringify(data))
+    emitMessage(socketId: string | undefined, api: string, data: any){
+        if(socketId) {
+            let socket = this.server.sockets.sockets.get(socketId);
+            if (socket){
+                socket.emit(api, JSON.stringify(data))
+            }
+        } else {
+            console.log("can't emit message without socketID")
         }
     }
 
@@ -47,7 +51,7 @@ export class WebSocketManager{
             return undefined;
         }
     }
-    findClientBySocketId(socketId: string): WSConnection | undefined {
+    findClientBySocketId(socketId: string | undefined): WSConnection | undefined {
         let client = this.wsClients.find(client => client.socketId === socketId);
         if(client) {
             return client;

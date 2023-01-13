@@ -28,6 +28,7 @@ export class ControlLock {
         this.timeoutManager.revokeControllerRights$.subscribe(() => {
             this.currentController.jwt = undefined;
             this.currentController.hasControl = false;
+            this.currentController.socketId = undefined;
         });
     }
 
@@ -47,7 +48,7 @@ export class ControlLock {
         return this.timeoutManager
     }
 
-    async takeControl(secretKey: string, webSocketManager: WebSocketManager, socketId: string, force?: boolean) {
+    async takeControl(secretKey: string, webSocketManager: WebSocketManager, socketId: string | undefined, force?: boolean) {
         let success: boolean = false;
         if (this.isLocked == false || force === true) {
             this.isLocked = true;
