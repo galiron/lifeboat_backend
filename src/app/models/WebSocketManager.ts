@@ -42,7 +42,6 @@ export class WebSocketManager{
     }
 
     findIdentifierBySocketId(socketId: string): string | undefined {
-        console.log("socket:", JSON.stringify(socketId));
         let client = this.wsClients.find(client => client.socketId == socketId);
         console.log("found client:", JSON.stringify(client))
         if(client) {

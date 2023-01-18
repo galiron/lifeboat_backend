@@ -26,8 +26,8 @@ export function lock(data: WSLockRequest, webSocketManager: WebSocketManager, co
 export function requestControlTransfer(data: WSRequestControlTransferToBackend, webSocketManager: WebSocketManager, controlLock: ControlLock, server: Server, socketId: string){
     try {
         if (data.name && data.secretKey) {
-            if(!(controlLock.getCurrentController()?.socketId === socketId)){
-                if(controlLock.getCurrentController()?.hasControl === true){
+            if(!(webSocketManager.findCurrentController()?.socketId === socketId)){
+                if(webSocketManager.findCurrentController()?.hasControl === true){
                     controlLock.requestControlTransfer(webSocketManager, data.secretKey, data.name, server, socketId)
                 } else {
                     controlLock.takeControl(data.secretKey, webSocketManager, socketId)
@@ -50,7 +50,7 @@ export function requestControlTransfer(data: WSRequestControlTransferToBackend, 
 export function transferControl(data: WSControlTransferResponse, webSocketManager: WebSocketManager, controlLock: ControlLock, server: Server, socketId: string) {
     try {
         if (data.jwt && data.identifier){
-            controlLock.transferControlTransfer(data.jwt, data.identifier, webSocketManager)
+            controlLock.transferControlTransfer(data.jwt, data.identifier, webSocketManager, socketId)
         } else {
             const data = {
                 success: false,
