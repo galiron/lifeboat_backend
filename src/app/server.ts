@@ -4,7 +4,7 @@ import * as http from 'http';
 import * as WebSocket from 'ws';
 import { AddressInfo } from 'net';
 import { ControlSocket } from './models/ControllsSocket';
-import { feedVigilanceControl, feedWatchdog, lock, processMessage, requestControlTransfer, select, shift, steer, throttle, transferControl, transferControlDeclined, unlock } from './logic/WebsocketApi';
+import { feedVigilanceControl, feedWatchdog, lock, requestControlTransfer, select, shift, steer, throttle, transferControl, transferControlDeclined, unlock } from './logic/WebsocketApi';
 import { WebSocketManager } from './models/WebSocketManager';
 import { Server } from "socket.io"
 
@@ -63,18 +63,6 @@ io.on("connection", (socket) => {
 		steer(msg, webSocketManager, controlSocket, controlLock, io, socket.id)
 	});
 })
-
-// wss.on('connection', (ws: WebSocket) => {
-// 		ws.on('message', (msgString: string) => {
-// 			// outsourced the functionality for better testability
-// 			processMessage(msgString, webSocketManager, ws, controlSocket, controlLock)
-// 		});
-
-// 		ws.on('disconnect', () => {
-// 			// outsourced the functionality for better testability
-// 			webSocketManager.removeClient(ws);
-// 		});
-// });
 
 // start our server
 server.listen(process.env.PORT || 3000, () => {
