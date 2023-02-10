@@ -26,15 +26,19 @@ export function lock(data: WSLockRequest, webSocketManager: WebSocketManager, co
 export function requestControlTransfer(data: WSRequestControlTransferToBackend, webSocketManager: WebSocketManager, controlLock: ControlLock, server: Server, socketId: string){
     try {
         if (data.name && data.secretKey) {
-            if(controlLock.getCurrentController()?.hasControl === true){
-                controlLock.requestControlTransfer(webSocketManager, data.secretKey, data.name, server, socketId)
+            if(!(webSocketManager.findCurrentController()?.socketId === socketId)){
+                if(webSocketManager.findCurrentController()?.hasControl === true){
+                    controlLock.requestControlTransfer(webSocketManager, data.secretKey, data.name, server, socketId)
+                } else {
+                    controlLock.takeControl(data.secretKey, webSocketManager, socketId)
+                    .then((jwtMsg) => {
+                        console.log(jwtMsg)
+                        webSocketManager.emitMessage(socketId, "WSControlAssignment", jwtMsg);
+                        }
+                    )       
+                }
             } else {
-                controlLock.takeControl(data.secretKey, webSocketManager, socketId)
-                .then((jwtMsg) => {
-                    console.log(jwtMsg)
-                    webSocketManager.emitMessage(socketId, "WSControlAssignment", jwtMsg);
-                    }
-                )       
+                console.log("error: requester is already in control ")
             }
         } else {
             console.log("data expected format of WSControlTransferResponse, found data is: ", data)

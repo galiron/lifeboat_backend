@@ -20,7 +20,7 @@ export class TimeoutManager {
         }
         this.dog = new Watchdog(2200) // 2.2 sec
         this.dog.on('reset', () => { 
-            this.dog?.sleep(); 
+            this.dog?.sleep();
             this.vigilanceControl?.sleep();})
         this.dog.on('feed', () => { })
         this.dog.on('sleep', () => {
@@ -39,7 +39,7 @@ export class TimeoutManager {
             this.vigilanceControl.removeAllListeners()
             this.vigilanceControl = undefined;
         }
-        this.vigilanceControl = new Watchdog(3000) // 30sec
+        this.vigilanceControl = new Watchdog(3000)
         this.vigilanceControl.on('reset', () => { 
             this.vigilanceControl?.sleep(); 
             this.dog?.sleep(); })
@@ -59,17 +59,17 @@ export class TimeoutManager {
         })
         this.vigilanceControl.feed({
             data:    'delicious',
-            timeout: 30000,
+            timeout: 30000, // 30sec
         })
     }    
 
     watchDogPoll(webSocketManager: WebSocketManager, initializedToken: string, controlLock: ControlLock){
-        if(requestIsAllowed(webSocketManager, controlLock.getCurrentController(), controlLock.getControllerToken(), initializedToken)){
-            this.requestDogFood(controlLock.getCurrentController()?.socketId, webSocketManager)
+        if(requestIsAllowed(webSocketManager, webSocketManager.findCurrentController(), controlLock.getControllerToken(), initializedToken)){
+            this.requestDogFood(webSocketManager.findCurrentController()?.socketId, webSocketManager)
             setTimeout(() => {
                 this.watchDogPoll(webSocketManager, initializedToken, controlLock)
             }, 1000);
-        } 
+        }
     }
 
     requestDogFood(socketId: string | undefined, webSocketManager: WebSocketManager) : any{
@@ -84,7 +84,7 @@ export class TimeoutManager {
         return new Promise((resolve, reject) => {
             let success: boolean = false;
             try {
-                if(requestIsAllowed(webSocketManager, controlLock.getCurrentController(), controlLock.getControllerToken(), clientToken)) {
+                if(requestIsAllowed(webSocketManager, webSocketManager.findCurrentController(), controlLock.getControllerToken(), clientToken)) {
                     var decoded = jwt.verify(clientToken, controlLock.getSecretKey());
                     success = true;
                     watchdog?.feed({

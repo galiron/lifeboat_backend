@@ -22,7 +22,7 @@ export class ControlLock {
     private requesters: ControlTransferObject[] = [];
     private currentController!: WSConnection;
     constructor(){
-        this.timeoutManager.isLocked$.subscribe((isLocked) => {
+        this.timeoutManager.isLocked$.subscribe((isLocked: boolean) => {
             this.isLocked = isLocked;
         });
         this.timeoutManager.revokeControllerRights$.subscribe(() => {
@@ -35,9 +35,6 @@ export class ControlLock {
         return String(this.currentController?.jwt);
     }
     
-    getCurrentController(): WSConnection | undefined{
-        return this.currentController
-    }
 
     getSecretKey(){
         return String(this.secretKey)
@@ -47,7 +44,7 @@ export class ControlLock {
         return this.timeoutManager
     }
 
-    async takeControl(secretKey: string, webSocketManager: WebSocketManager, socketId: string, force?: boolean) {
+    async takeControl(secretKey: string, webSocketManager: WebSocketManager, socketId: string | undefined, force?: boolean) {
         let success: boolean = false;
         if (this.isLocked == false || force === true) {
             this.isLocked = true;
@@ -139,6 +136,7 @@ export class ControlLock {
         if (newController && client) {
             console.log("give control to: ", newController)
             console.log("give control to client: ", client)
+            webSocketManager.emitMessage(this.currentController.socketId, "WSLockReleaseResponse", this.releaseControl(jwt, true));
             this.takeControl(newController.secretKey, webSocketManager, client.socketId, true).then((jwtMsg) => {
                 console.log(jwtMsg)
                 this.requesters = [];
@@ -158,12 +156,17 @@ export class ControlLock {
         }
     }
 
-    releaseControl(clientToken: string) {
+    releaseControl(clientToken: string, keepLock?: boolean) {
         let success: boolean = false;
         console.log("request from to: ", clientToken)
         try {
             var decoded = jwt.verify(clientToken, this.secretKey);
-            this.isLocked = false;
+            if(!keepLock){
+                console.log("unlocking")
+                this.isLocked = false;
+            } else{
+                console.log("keeping lock")
+            }
             success = true;
             this.timeoutManager.dog?.sleep();
             console.log(decoded)

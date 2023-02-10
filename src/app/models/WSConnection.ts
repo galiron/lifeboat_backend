@@ -5,7 +5,7 @@ export class WSConnection {
     hasControl: boolean;
     private identity: string;
     jwt: string | undefined;
-    socketId: string;
+    socketId: string | undefined;
 
     constructor(socketId: string, hasControl?: boolean, identity?: string, jwt?: string){
         if(socketId && hasControl && identity && jwt) {
