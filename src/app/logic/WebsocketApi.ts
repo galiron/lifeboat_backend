@@ -90,6 +90,8 @@ export function feedWatchdog(data: WSJwtMessage, webSocketManager: WebSocketMana
             controlLock.getTimeoutManager().feedWatchdog(webSocketManager, data.jwt, controlLock).catch((err) => {
                 console.log(err);
             })
+        } else {
+            throw new Error("Missing jwt in feedWatchdog request")
         }
     } catch(err: any){
         console.log(err)

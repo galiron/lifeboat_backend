@@ -11,15 +11,17 @@ export class WebSocketManager{
         this.server = socketioServer;
     }
 
-    emitMessage(socketId: string | undefined, api: string, data: any){
+    emitMessage(socketId: string | undefined, api: string, data: any) : boolean{
         if(socketId) {
             let socket = this.server.sockets.sockets.get(socketId);
             if (socket){
                 socket.emit(api, data)
+                return true
             }
         } else {
             console.log("can't emit message without socketID")
         }
+        return false;
     }
 
     addClient(socketId: string) {

@@ -24,6 +24,7 @@ export class TimeoutManager {
             this.vigilanceControl?.sleep();})
         this.dog.on('feed', () => { })
         this.dog.on('sleep', () => {
+            this.removeCurrentClientControl(webSocketManager)
             this.isLocked$.next(false);
             this.revokeControllerRights$.next(undefined);
         })
@@ -45,23 +46,29 @@ export class TimeoutManager {
             this.dog?.sleep(); })
         this.vigilanceControl.on('feed', () => { })
         this.vigilanceControl.on('sleep', () => {
-            this.isLocked$.next(false);
-            let currentController = webSocketManager.findCurrentController()
-            if (currentController) {
-                const releaseMessage = {
-                    success: true,
-                    interfaceType: "WSLockReleaseResponse"
-                }
-                webSocketManager.emitMessage(currentController.socketId, "WSLockReleaseResponse", releaseMessage)
-            }
-            this.revokeControllerRights$.next(undefined);
+            this.removeCurrentClientControl(webSocketManager)
             console.log("control released, due to inactivity")
         })
         this.vigilanceControl.feed({
             data:    'delicious',
             timeout: 30000, // 30sec
         })
-    }    
+    }
+    
+    private removeCurrentClientControl(webSocketManager: WebSocketManager) : boolean {
+        let currentController = webSocketManager.findCurrentController()
+        if (currentController) {
+            const releaseMessage = {
+                success: true,
+                interfaceType: "WSLockReleaseResponse"
+            }
+            // notify client that control is lost
+            webSocketManager.emitMessage(currentController.socketId, "WSLockReleaseResponse", releaseMessage)
+            this.revokeControllerRights$.next(undefined);
+            this.isLocked$.next(false);
+        }
+        return false
+    }
 
     watchDogPoll(webSocketManager: WebSocketManager, initializedToken: string, controlLock: ControlLock){
         if(requestIsAllowed(webSocketManager, webSocketManager.findCurrentController(), controlLock.getControllerToken(), initializedToken)){
