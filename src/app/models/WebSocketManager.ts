@@ -15,7 +15,7 @@ export class WebSocketManager{
         if(socketId) {
             let socket = this.server.sockets.sockets.get(socketId);
             if (socket){
-                socket.emit(api, JSON.stringify(data))
+                socket.emit(api, data)
             }
         } else {
             console.log("can't emit message without socketID")
