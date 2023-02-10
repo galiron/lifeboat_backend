@@ -1,4 +1,4 @@
-import { ControlLock } from './logic/ControlLock';
+import { ControlManager } from './logic/ControlManager';
 import express from 'express';
 import * as http from 'http';
 import * as WebSocket from 'ws';
@@ -12,7 +12,7 @@ const app = express();
 
 
 // initialize control lock
-const controlLock: ControlLock = new ControlLock
+const controlManager: ControlManager = new ControlManager
 // initialize a simple http server
 const server = http.createServer(app);
 // initilaize socket.io wrapper for communication with the control device
@@ -28,39 +28,39 @@ const webSocketManager: WebSocketManager = new WebSocketManager(io);
 
 io.on("connection", (socket) => {
 	webSocketManager.addClient(socket.id);
-	console.log("connected, current controller = ", controlLock.getControllerToken())
+	console.log("connected, current controller = ", controlManager.getControllerToken())
 	socket.on("lock", (msg) => {
-		lock(msg, webSocketManager, controlLock, socket.id)
+		lock(msg, webSocketManager, controlManager, socket.id)
 	});
 	socket.on("unlock", (msg) => {
-		unlock(msg, webSocketManager, controlLock, io, socket.id)
+		unlock(msg, webSocketManager, controlManager, io, socket.id)
 	});
 	socket.on("requestControlTransfer", (msg) => {
-		requestControlTransfer(msg, webSocketManager, controlLock, io, socket.id)
+		requestControlTransfer(msg, webSocketManager, controlManager, io, socket.id)
 	});
 	socket.on("transferControl", (msg) => {
-		transferControl(msg, webSocketManager, controlLock, io, socket.id)
+		transferControl(msg, webSocketManager, controlManager, io, socket.id)
 	});
 	socket.on("transferControlDeclined", (msg) => {
-		transferControlDeclined(msg, webSocketManager, controlLock, io, socket.id)
+		transferControlDeclined(msg, webSocketManager, controlManager, io, socket.id)
 	});
 	socket.on("feedWatchdog", (msg) => {
-		feedWatchdog(msg, webSocketManager, controlLock, io, socket.id)
+		feedWatchdog(msg, webSocketManager, controlManager, io, socket.id)
 	});
 	socket.on("feedVigilanceControl", (msg) => {
-		feedVigilanceControl(msg, webSocketManager, controlLock, io, socket.id)
+		feedVigilanceControl(msg, webSocketManager, controlManager, io, socket.id)
 	});
 	socket.on("select", (msg) => {
-		select(msg, webSocketManager, controlSocket, controlLock, io, socket.id)
+		select(msg, webSocketManager, controlSocket, controlManager, io, socket.id)
 	});
 	socket.on("shift", (msg) => {
-		shift(msg, webSocketManager, controlSocket, controlLock, io, socket.id)
+		shift(msg, webSocketManager, controlSocket, controlManager, io, socket.id)
 	});
 	socket.on("throttle", (msg) => {
-		throttle(msg, webSocketManager, controlSocket, controlLock, io, socket.id)
+		throttle(msg, webSocketManager, controlSocket, controlManager, io, socket.id)
 	});
 	socket.on("steer", (msg) => {
-		steer(msg, webSocketManager, controlSocket, controlLock, io, socket.id)
+		steer(msg, webSocketManager, controlSocket, controlManager, io, socket.id)
 	});
 })
 

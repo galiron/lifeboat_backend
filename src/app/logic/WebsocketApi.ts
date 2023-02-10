@@ -2,16 +2,16 @@ import { Instruction } from './../models/Interfaces';
 import { Server } from 'socket.io';
 import { ControlSocket } from '../models/ControllsSocket';
 import { messageIsOfInterface, WSAPIMessage, WSControlTransferResponse, WSJwtMessage, WSLockReleaseResponse, WSLockRequest, WSRequestControlTransferToBackend, WSSelectRequest, WSShifttRequest, WSSteeringRequest, WSThrottleRequest, WSVigilanceFeedResponse } from "../models/WSMessageInterfaces";
-import { ControlLock } from "./ControlLock";
+import { ControlManager } from "./ControlManager";
 import * as WebSocket from 'ws';
 import { WebSocketManager } from '../models/WebSocketManager';
 import { Socket } from 'socket.io-client';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 
-export function lock(data: WSLockRequest, webSocketManager: WebSocketManager, controlLock: ControlLock, socketId: string){
+export function lock(data: WSLockRequest, webSocketManager: WebSocketManager, controlManager: ControlManager, socketId: string){
     try {
         if (data.secretKey) {
-            controlLock.takeControl(data.secretKey, webSocketManager, socketId)
+            controlManager.takeControl(data.secretKey, webSocketManager, socketId)
             .then((jwtMsg) => {
                 console.log(jwtMsg)
                 webSocketManager.emitMessage(socketId, "WSControlAssignment", jwtMsg);
@@ -23,14 +23,14 @@ export function lock(data: WSLockRequest, webSocketManager: WebSocketManager, co
         console.log(err)
     }
 }
-export function requestControlTransfer(data: WSRequestControlTransferToBackend, webSocketManager: WebSocketManager, controlLock: ControlLock, server: Server, socketId: string){
+export function requestControlTransfer(data: WSRequestControlTransferToBackend, webSocketManager: WebSocketManager, controlManager: ControlManager, server: Server, socketId: string){
     try {
         if (data.name && data.secretKey) {
             if(!(webSocketManager.findCurrentController()?.socketId === socketId)){
                 if(webSocketManager.findCurrentController()?.hasControl === true){
-                    controlLock.requestControlTransfer(webSocketManager, data.secretKey, data.name, server, socketId)
+                    controlManager.requestControlTransfer(webSocketManager, data.secretKey, data.name, server, socketId)
                 } else {
-                    controlLock.takeControl(data.secretKey, webSocketManager, socketId)
+                    controlManager.takeControl(data.secretKey, webSocketManager, socketId)
                     .then((jwtMsg) => {
                         console.log(jwtMsg)
                         webSocketManager.emitMessage(socketId, "WSControlAssignment", jwtMsg);
@@ -47,10 +47,10 @@ export function requestControlTransfer(data: WSRequestControlTransferToBackend, 
         console.log(err)
     }
 }
-export function transferControl(data: WSControlTransferResponse, webSocketManager: WebSocketManager, controlLock: ControlLock, server: Server, socketId: string) {
+export function transferControl(data: WSControlTransferResponse, webSocketManager: WebSocketManager, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt && data.identifier){
-            controlLock.transferControl(data.jwt, data.identifier, webSocketManager)
+            controlManager.transferControl(data.jwt, data.identifier, webSocketManager)
         } else {
             const data = {
                 success: false,
@@ -63,20 +63,20 @@ export function transferControl(data: WSControlTransferResponse, webSocketManage
         console.log(err)
     }
 }
-export function transferControlDeclined(data: WSControlTransferResponse, webSocketManager: WebSocketManager, controlLock: ControlLock, server: Server, socketId: string) {
+export function transferControlDeclined(data: WSControlTransferResponse, webSocketManager: WebSocketManager, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt && data.identifier){
-            controlLock.transferControlDeclined(data.jwt, data.identifier, webSocketManager)
+            controlManager.transferControlDeclined(data.jwt, data.identifier, webSocketManager)
         } else {
         }
     } catch(err: any){
         console.log(err)
     }
 }
-export function unlock(data: WSJwtMessage, webSocketManager: WebSocketManager, controlLock: ControlLock, server: Server, socketId: string) {
+export function unlock(data: WSJwtMessage, webSocketManager: WebSocketManager, controlManager: ControlManager, server: Server, socketId: string) {
     try { 
         if (data.jwt){
-            const releaseMessage = controlLock.releaseControl(data.jwt)
+            const releaseMessage = controlManager.releaseControl(data.jwt)
             console.log(releaseMessage)
             webSocketManager.emitMessage(socketId,"WSLockReleaseResponse", releaseMessage)
         }
@@ -84,10 +84,10 @@ export function unlock(data: WSJwtMessage, webSocketManager: WebSocketManager, c
         console.log(err)
     }
 }
-export function feedWatchdog(data: WSJwtMessage, webSocketManager: WebSocketManager, controlLock: ControlLock, server: Server, socketId: string) {
+export function feedWatchdog(data: WSJwtMessage, webSocketManager: WebSocketManager, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt){
-            controlLock.getTimeoutManager().feedWatchdog(webSocketManager, data.jwt, controlLock).catch((err) => {
+            controlManager.getTimeoutManager().feedWatchdog(webSocketManager, data.jwt, controlManager).catch((err) => {
                 console.log(err);
             })
         } else {
@@ -97,10 +97,10 @@ export function feedWatchdog(data: WSJwtMessage, webSocketManager: WebSocketMana
         console.log(err)
     }
 }
-export function feedVigilanceControl(data: WSJwtMessage, webSocketManager: WebSocketManager, controlLock: ControlLock, server: Server, socketId: string) {
+export function feedVigilanceControl(data: WSJwtMessage, webSocketManager: WebSocketManager, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt){
-            controlLock.getTimeoutManager().feedVigilanceControl(webSocketManager, data.jwt, controlLock).then(() => {
+            controlManager.getTimeoutManager().feedVigilanceControl(webSocketManager, data.jwt, controlManager).then(() => {
                 let responseData: WSVigilanceFeedResponse = {
                     success: true,
                     interfaceType: "WSVigilanceFeedResponse"
@@ -114,10 +114,10 @@ export function feedVigilanceControl(data: WSJwtMessage, webSocketManager: WebSo
         console.log(err)
     }
 }
-export function select(data: WSSelectRequest, webSocketManager: WebSocketManager,controlSocket: ControlSocket, controlLock: ControlLock, server: Server, socketId: string) {
+export function select(data: WSSelectRequest, webSocketManager: WebSocketManager,controlSocket: ControlSocket, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt && data.instruction){
-            const isController = controlLock.verify(data.jwt);
+            const isController = controlManager.verify(data.jwt);
             if(isController){
                 controlSocket.emit("select", data.instruction)
             }
@@ -126,10 +126,10 @@ export function select(data: WSSelectRequest, webSocketManager: WebSocketManager
         console.log(err)
     }
 }
-export function shift(data: WSShifttRequest, webSocketManager: WebSocketManager,controlSocket: ControlSocket, controlLock: ControlLock, server: Server, socketId: string) {
+export function shift(data: WSShifttRequest, webSocketManager: WebSocketManager,controlSocket: ControlSocket, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt && data.instruction){
-            const isController = controlLock.verify(data.jwt);
+            const isController = controlManager.verify(data.jwt);
             if(isController){
                 controlSocket.emit("shift", data.instruction)
             }
@@ -138,10 +138,10 @@ export function shift(data: WSShifttRequest, webSocketManager: WebSocketManager,
         console.log(err)
     }
 }
-export function throttle(data: WSThrottleRequest, webSocketManager: WebSocketManager,controlSocket: ControlSocket, controlLock: ControlLock, server: Server, socketId: string) {
+export function throttle(data: WSThrottleRequest, webSocketManager: WebSocketManager,controlSocket: ControlSocket, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt && data.instruction){
-            const isController = controlLock.verify(data.jwt);
+            const isController = controlManager.verify(data.jwt);
             if(isController){
                 controlSocket.emit("throttle", data.instruction)
             }
@@ -150,10 +150,10 @@ export function throttle(data: WSThrottleRequest, webSocketManager: WebSocketMan
         console.log(err)
     }
 }
-export function steer(data: WSSteeringRequest, webSocketManager: WebSocketManager,controlSocket: ControlSocket, controlLock: ControlLock, server: Server, socketId: string) {
+export function steer(data: WSSteeringRequest, webSocketManager: WebSocketManager,controlSocket: ControlSocket, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt && data.instruction){
-            const isController = controlLock.verify(data.jwt);
+            const isController = controlManager.verify(data.jwt);
             if(isController){
                 controlSocket.emit("steer", data.instruction)
             }

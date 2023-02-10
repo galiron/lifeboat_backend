@@ -13,7 +13,7 @@ import { WSConnection } from '../models/WSConnection';
 import { TimeoutManager } from '../models/TimeoutManager';
 import { requestIsAllowed } from '../utils/helpers';
 
-export class ControlLock {
+export class ControlManager {
     isLocked: boolean = false;
     private saltRounds = 9;
     private password = "";
