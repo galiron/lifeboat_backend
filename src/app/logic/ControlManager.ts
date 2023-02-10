@@ -136,13 +136,16 @@ export class ControlManager {
         if (newController && client) {
             console.log("give control to: ", newController)
             console.log("give control to client: ", client)
-            webSocketManager.emitMessage(this.currentController.socketId, "WSLockReleaseResponse", this.releaseControl(jwt, true));
-            this.takeControl(newController.secretKey, webSocketManager, client.socketId, true).then((jwtMsg) => {
-                console.log(jwtMsg)
-                this.requesters = [];
-                webSocketManager.emitMessage(this.currentController.socketId, "WSControlAssignment", jwtMsg);
-                }
-            )
+            const isAllowed = requestIsAllowed(webSocketManager,webSocketManager.findCurrentController(), this.getControllerToken(), jwt)
+            if(isAllowed){
+                webSocketManager.emitMessage(this.currentController.socketId, "WSLockReleaseResponse", this.releaseControl(jwt, true));
+                this.takeControl(newController.secretKey, webSocketManager, client.socketId, true).then((jwtMsg) => {
+                    console.log(jwtMsg)
+                    this.requesters = [];
+                    webSocketManager.emitMessage(this.currentController.socketId, "WSControlAssignment", jwtMsg);
+                    }
+                )
+            }
         }
     }
 
@@ -160,7 +163,6 @@ export class ControlManager {
         let success: boolean = false;
         console.log("request from to: ", clientToken)
         try {
-            var decoded = jwt.verify(clientToken, this.secretKey);
             if(!keepLock){
                 console.log("unlocking")
                 this.isLocked = false;
@@ -169,23 +171,12 @@ export class ControlManager {
             }
             success = true;
             this.timeoutManager.dog?.sleep();
-            console.log(decoded)
         } catch(err) {
             console.log(err)
         }
         return {
             success,
             interfaceType: "WSLockReleaseResponse"
-        }
-    }
-
-    verify(clientToken: string) {
-        try {
-            var decoded = jwt.verify(clientToken, this.secretKey);
-            return true;
-        } catch(err) {
-            console.log(err)
-            return false;
         }
     }
 }

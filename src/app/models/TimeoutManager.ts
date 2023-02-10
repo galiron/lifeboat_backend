@@ -92,7 +92,6 @@ export class TimeoutManager {
             let success: boolean = false;
             try {
                 if(requestIsAllowed(webSocketManager, webSocketManager.findCurrentController(), controlManager.getControllerToken(), clientToken)) {
-                    var decoded = jwt.verify(clientToken, controlManager.getSecretKey());
                     success = true;
                     watchdog?.feed({
                         data:    'delicious',

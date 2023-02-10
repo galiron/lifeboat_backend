@@ -2,7 +2,7 @@ import { WebSocketManager } from "../models/WebSocketManager";
 import { WSConnection } from "../models/WSConnection";
 import jwt from 'jsonwebtoken';
 
-export function requestIsAllowed(webSocketManager: WebSocketManager, currentController: WSConnection | undefined, controllerToken: string | undefined, jwtToken: string) {
+export function requestIsAllowed(webSocketManager: WebSocketManager, currentController: WSConnection | undefined, controllerToken: string | undefined, jwtToken: string) : boolean {
     console.log("controllerToken: ", controllerToken);
     console.log("jwtToken: ", jwtToken);
     console.log("currentController: ", currentController);
@@ -13,3 +13,4 @@ export function requestIsAllowed(webSocketManager: WebSocketManager, currentCont
         return false
     }
 }
+

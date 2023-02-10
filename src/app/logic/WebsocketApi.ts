@@ -7,6 +7,7 @@ import * as WebSocket from 'ws';
 import { WebSocketManager } from '../models/WebSocketManager';
 import { Socket } from 'socket.io-client';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
+import { requestIsAllowed } from '../utils/helpers';
 
 export function lock(data: WSLockRequest, webSocketManager: WebSocketManager, controlManager: ControlManager, socketId: string){
     try {
@@ -17,6 +18,8 @@ export function lock(data: WSLockRequest, webSocketManager: WebSocketManager, co
                 webSocketManager.emitMessage(socketId, "WSControlAssignment", jwtMsg);
                 }
             )
+        } else {
+            throw new Error("Missing fields in lock request, data is " + JSON.stringify(data))
         }
         
     } catch(err: any){
@@ -41,7 +44,7 @@ export function requestControlTransfer(data: WSRequestControlTransferToBackend, 
                 console.log("error: requester is already in control ")
             }
         } else {
-            console.log("data expected format of WSControlTransferResponse, found data is: ", data)
+            throw new Error("Missing fields in requestControlTransfer request, data is " + JSON.stringify(data))
         }
     } catch(err: any){
         console.log(err)
@@ -68,6 +71,7 @@ export function transferControlDeclined(data: WSControlTransferResponse, webSock
         if (data.jwt && data.identifier){
             controlManager.transferControlDeclined(data.jwt, data.identifier, webSocketManager)
         } else {
+            throw new Error("Missing fields in transferControlDeclined request, data is " + JSON.stringify(data))
         }
     } catch(err: any){
         console.log(err)
@@ -79,6 +83,8 @@ export function unlock(data: WSJwtMessage, webSocketManager: WebSocketManager, c
             const releaseMessage = controlManager.releaseControl(data.jwt)
             console.log(releaseMessage)
             webSocketManager.emitMessage(socketId,"WSLockReleaseResponse", releaseMessage)
+        } else {
+            throw new Error("Missing fields in unlock request, data is " + JSON.stringify(data))
         }
     } catch(err: any){
         console.log(err)
@@ -91,7 +97,7 @@ export function feedWatchdog(data: WSJwtMessage, webSocketManager: WebSocketMana
                 console.log(err);
             })
         } else {
-            throw new Error("Missing jwt in feedWatchdog request")
+            throw new Error("Missing fields in feedWatchdog request, data is " + JSON.stringify(data))
         }
     } catch(err: any){
         console.log(err)
@@ -109,6 +115,8 @@ export function feedVigilanceControl(data: WSJwtMessage, webSocketManager: WebSo
             }).catch((err) => {
                 console.log(err);
             })
+        } else {
+            throw new Error("Missing fields in feedVigilanceControl request, data is " + JSON.stringify(data))
         }
     } catch(err: any){
         console.log(err)
@@ -117,10 +125,12 @@ export function feedVigilanceControl(data: WSJwtMessage, webSocketManager: WebSo
 export function select(data: WSSelectRequest, webSocketManager: WebSocketManager,controlSocket: ControlSocket, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt && data.instruction){
-            const isController = controlManager.verify(data.jwt);
-            if(isController){
+            const isAllowed = requestIsAllowed(webSocketManager,webSocketManager.findCurrentController(), controlManager.getControllerToken(), data.jwt)
+            if(isAllowed){
                 controlSocket.emit("select", data.instruction)
             }
+        } else {
+            throw new Error("Missing fields in select request, data is " + JSON.stringify(data))
         }
     } catch(err: any){
         console.log(err)
@@ -129,10 +139,12 @@ export function select(data: WSSelectRequest, webSocketManager: WebSocketManager
 export function shift(data: WSShifttRequest, webSocketManager: WebSocketManager,controlSocket: ControlSocket, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt && data.instruction){
-            const isController = controlManager.verify(data.jwt);
-            if(isController){
+            const isAllowed = requestIsAllowed(webSocketManager,webSocketManager.findCurrentController(), controlManager.getControllerToken(), data.jwt)
+            if(isAllowed){
                 controlSocket.emit("shift", data.instruction)
             }
+        } else {
+           throw new Error("Missing fields in shift request, data is " + JSON.stringify(data))
         }
     } catch(err: any){
         console.log(err)
@@ -141,10 +153,12 @@ export function shift(data: WSShifttRequest, webSocketManager: WebSocketManager,
 export function throttle(data: WSThrottleRequest, webSocketManager: WebSocketManager,controlSocket: ControlSocket, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt && data.instruction){
-            const isController = controlManager.verify(data.jwt);
-            if(isController){
+            const isAllowed = requestIsAllowed(webSocketManager,webSocketManager.findCurrentController(), controlManager.getControllerToken(), data.jwt)
+            if(isAllowed){
                 controlSocket.emit("throttle", data.instruction)
             }
+        } else {
+            throw new Error("Missing fields in throttle request, data is " + JSON.stringify(data))
         }
     } catch(err: any){
         console.log(err)
@@ -153,10 +167,12 @@ export function throttle(data: WSThrottleRequest, webSocketManager: WebSocketMan
 export function steer(data: WSSteeringRequest, webSocketManager: WebSocketManager,controlSocket: ControlSocket, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt && data.instruction){
-            const isController = controlManager.verify(data.jwt);
-            if(isController){
+            const isAllowed = requestIsAllowed(webSocketManager,webSocketManager.findCurrentController(), controlManager.getControllerToken(), data.jwt)
+            if(isAllowed){
                 controlSocket.emit("steer", data.instruction)
             }
+        } else {
+            throw new Error("Missing fields in steer request, data is " + JSON.stringify(data))
         }
     } catch(err: any){
         console.log(err)
