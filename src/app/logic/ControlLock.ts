@@ -133,7 +133,7 @@ export class ControlLock {
         }
     }
 
-    transferControlTransfer(jwt: string, identifier: string, webSocketManager: WebSocketManager) {
+    transferControl(jwt: string, identifier: string, webSocketManager: WebSocketManager) {
         let newController: ControlTransferObject | undefined = this.requesters.find(requester => requester.identifier === identifier)
         const client = webSocketManager.findClientByIdentifier(identifier);
         if (newController && client) {

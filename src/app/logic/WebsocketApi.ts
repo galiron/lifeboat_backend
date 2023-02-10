@@ -46,7 +46,7 @@ export function requestControlTransfer(data: WSRequestControlTransferToBackend, 
 export function transferControl(data: WSControlTransferResponse, webSocketManager: WebSocketManager, controlLock: ControlLock, server: Server, socketId: string) {
     try {
         if (data.jwt && data.identifier){
-            controlLock.transferControlTransfer(data.jwt, data.identifier, webSocketManager)
+            controlLock.transferControl(data.jwt, data.identifier, webSocketManager)
         } else {
             const data = {
                 success: false,
