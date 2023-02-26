@@ -5,7 +5,8 @@ export interface WSMessage {
 }
 
 export interface WSLockRequest extends WSMessage {
-    secretKey: string;
+    username: string,
+    password: string;
 }
 
 export interface WSErrorResponse extends WSMessageResponse {
@@ -72,13 +73,13 @@ export interface WSControlTransferResponse extends WSJwtResponse{
 }
 
 export interface WSRequestControlTransferToBackend extends WSMessage{
-    name: string;
-    secretKey: string;
+    username: string;
+    password: string;
 }
 
 export interface WSRequestControlTransferToClient extends WSMessage{
     identifier: string;
-    name: string
+    username: string
 }
 
 

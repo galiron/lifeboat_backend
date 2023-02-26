@@ -1,6 +1,6 @@
 export interface ControlTransferObject{
-    secretKey: string;
-    name: string;
+    password: string;
+    username: string;
     identifier: string;
 }
 

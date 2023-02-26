@@ -11,8 +11,8 @@ import { requestIsAllowed } from '../utils/helpers';
 
 export function lock(data: WSLockRequest, webSocketManager: WebSocketManager, controlManager: ControlManager, socketId: string){
     try {
-        if (data.secretKey) {
-            controlManager.takeControl(data.secretKey, webSocketManager, socketId)
+        if (data.password) {
+            controlManager.takeControl(data.username, data.password, webSocketManager, socketId)
             .then((jwtMsg) => {
                 console.log(jwtMsg)
                 webSocketManager.emitMessage(socketId, "WSControlAssignment", jwtMsg);
@@ -28,12 +28,12 @@ export function lock(data: WSLockRequest, webSocketManager: WebSocketManager, co
 }
 export function requestControlTransfer(data: WSRequestControlTransferToBackend, webSocketManager: WebSocketManager, controlManager: ControlManager, server: Server, socketId: string){
     try {
-        if (data.name && data.secretKey) {
+        if (data.username && data.password) {
             if(!(webSocketManager.findCurrentController()?.socketId === socketId)){
                 if(webSocketManager.findCurrentController()?.hasControl === true){
-                    controlManager.requestControlTransfer(webSocketManager, data.secretKey, data.name, server, socketId)
+                    controlManager.requestControlTransfer(webSocketManager, data.password, data.username, server, socketId)
                 } else {
-                    controlManager.takeControl(data.secretKey, webSocketManager, socketId)
+                    controlManager.takeControl(data.username, data.password, webSocketManager, socketId)
                     .then((jwtMsg) => {
                         console.log(jwtMsg)
                         webSocketManager.emitMessage(socketId, "WSControlAssignment", jwtMsg);

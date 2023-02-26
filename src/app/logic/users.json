@@ -1,0 +1,11 @@
+{
+    "users" : [
+     {
+         "name" : "captain",
+         "password" : "1234"
+     },
+     {
+         "name" : "extern",
+         "password" : "1234"
+     }]
+ }
