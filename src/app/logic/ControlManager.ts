@@ -23,7 +23,8 @@ export class ControlManager {
     private requesters: ControlTransferObject[] = [];
     private currentController!: WSConnection;
     private users : Array<{"name": string,"password" : string}> = new Array<{"name": string,"password" : string}>;
-    private data = fs.readFileSync("./src/app/logic/users.json", "utf-8")
+    private data = fs.readFileSync("./src/app/config.json", "utf-8")
+    private cameraData : Array<{"name": string,"uuid" : string}> = new Array<{"name": string,"uuid" : string}>;
     constructor(){
         this.timeoutManager.isLocked$.subscribe((isLocked: boolean) => {
             this.isLocked = isLocked;
@@ -36,6 +37,10 @@ export class ControlManager {
         for(let user of JSON.parse(this.data).users){
             console.log("user: ", user)
             this.users.push(user)
+        }
+        for(let camera of JSON.parse(this.data).cameras){
+            console.log("camera: ", camera)
+            this.cameraData.push(camera)
         }
     }
 
@@ -54,6 +59,7 @@ export class ControlManager {
 
     async takeControl(name: string, password: string, webSocketManager: WebSocketManager, socketId: string | undefined, force?: boolean) {
         let success: boolean = false;
+        console.log("User is verified: ",this.verifyUser(name, password));
         if ((this.isLocked == false || force === true) && this.verifyUser(name, password)) {
             this.isLocked = true;
             const controller: WSConnection | undefined = webSocketManager.findClientBySocketId(socketId);
@@ -84,6 +90,7 @@ export class ControlManager {
             return {
                 jwt: this.currentController.jwt, // 
                 success,
+                cameraData: this.cameraData,
                 interfaceType: "WSControlAssignment"
             }
             
@@ -91,6 +98,7 @@ export class ControlManager {
             return {
                 jwt: "", // 
                 success,
+                cameraData: undefined,
                 interfaceType: "WSControlAssignment"
             }
         }

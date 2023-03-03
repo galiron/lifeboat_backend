@@ -31,6 +31,7 @@ export interface WSJwtResponse extends WSMessageResponse{
 }
 
 export interface WSControlAssignment extends WSJwtResponse{
+    cameraData: string
 }
 
 export interface WSJwtMessage extends WSMessage{
