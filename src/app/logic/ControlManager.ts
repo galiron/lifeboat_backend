@@ -23,8 +23,8 @@ export class ControlManager {
     private requesters: ControlTransferObject[] = [];
     private currentController!: WSConnection;
     private users : Array<{"name": string,"password" : string}> = new Array<{"name": string,"password" : string}>;
-    private data = fs.readFileSync("./src/app/config.json", "utf-8")
     private cameraData : Array<{"name": string,"uuid" : string}> = new Array<{"name": string,"uuid" : string}>;
+    private data = fs.readFileSync("./src/app/config.json", "utf-8")
     constructor(){
         this.timeoutManager.isLocked$.subscribe((isLocked: boolean) => {
             this.isLocked = isLocked;
@@ -39,7 +39,7 @@ export class ControlManager {
             this.users.push(user)
         }
         for(let camera of JSON.parse(this.data).cameras){
-            console.log("camera: ", camera)
+            console.log("user: ", camera)
             this.cameraData.push(camera)
         }
     }
