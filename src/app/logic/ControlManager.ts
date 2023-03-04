@@ -57,11 +57,9 @@ export class ControlManager {
 
     async takeControl(name: string, password: string, webSocketManager: ClientWebSocketManager, socketId: string | undefined, force?: boolean) {
         let success: boolean = false;
-        console.log("User is verified: ",this.verifyUser(name, password));
         if ((this.isLocked == false || force === true) && this.verifyUser(name, password)) {
             this.isLocked = true;
             let controller: WSConnection | undefined = webSocketManager.findClientBySocketId(socketId);
-            controller?.setIdentity(name)
             console.log("controller is now: ", controller)
             if(controller) {
                 const oldController = webSocketManager.findCurrentController();
@@ -85,7 +83,6 @@ export class ControlManager {
             // check if old watchdog messes around with new one
             this.timeoutManager.setupWatchdog(webSocketManager, String(this.currentController.jwt), this);
             this.timeoutManager.setupVigilanceControl(webSocketManager);
-            console.log("control assigned to: ", this.currentController.jwt)
             return {
                 jwt: this.currentController.jwt, // 
                 success,
@@ -107,21 +104,19 @@ export class ControlManager {
         @param name: name of the requesting user that gets displayed to the user in control
         @param secretKey: key for new jwt token generation
     */
-    async requestControlTransfer(webSocketManager: ClientWebSocketManager, secretKey: string, name: string, server: Server, socketId: string) {
+    async requestControlTransfer(webSocketManager: ClientWebSocketManager, password: string, name: string, server: Server, socketId: string) {
         const identifier = webSocketManager.findIdentifierBySocketId(socketId);
         if(identifier) {
             let controlTransferObject: ControlTransferObject = {
-                "password":secretKey,
+                "password":password,
                 "username":name,
                 identifier
             };
             this.requesters.push(controlTransferObject);
             if(this.currentController){
-                console.log("request from to: ", socketId)
-                console.log("request going to: ", this.currentController.socketId)
                 const data = {
                     success: true,
-                    name,
+                    username: name,
                     identifier,
                     interfaceType: "WSRequestControlTransferToClient"
                 }
@@ -129,7 +124,7 @@ export class ControlManager {
             } else{
                 const data = {
                     success: false,
-                    name,
+                    username: name,
                     undefined,
                     interfaceType: "WSRequestControlTransferToClient"
                 }
@@ -161,6 +156,8 @@ export class ControlManager {
                     }
                 )
             }
+        } else {
+            console.log("error")
         }
     }
 
