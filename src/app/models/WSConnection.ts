@@ -28,4 +28,7 @@ export class WSConnection {
     getIdentity () : string {
         return String(this.identity);
     }
+    setIdentity (identity: string) {
+        this.identity = identity;
+    }
 }

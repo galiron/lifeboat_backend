@@ -1,8 +1,7 @@
 import { Server } from 'socket.io';
-import { WSConnection } from "./WSConnection";
-import * as WebSocket from 'ws';
+import { WSConnection } from "../models/WSConnection";
 
-export class WebSocketManager{
+export class ClientWebSocketManager {
 
     private wsClients: WSConnection [] = [];
     server: Server;
@@ -45,7 +44,6 @@ export class WebSocketManager{
 
     findIdentifierBySocketId(socketId: string): string | undefined {
         let client = this.wsClients.find(client => client.socketId == socketId);
-        console.log("found client:", JSON.stringify(client))
         if(client) {
             return client.getIdentity();
         } else {

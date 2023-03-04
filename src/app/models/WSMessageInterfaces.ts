@@ -1,4 +1,4 @@
-import { Instruction } from "./Interfaces";
+import { Instruction, CameraData } from "./Interfaces";
 
 export interface WSMessage {
     interfaceType: string;
@@ -32,11 +32,6 @@ export interface WSJwtResponse extends WSMessageResponse{
 
 export interface WSControlAssignment extends WSJwtResponse{
     cameraData: CameraData [];
-}
-
-export interface CameraData {
-    name: string;
-    uuid: string;
 }
 
 export interface WSJwtMessage extends WSMessage{
@@ -86,19 +81,4 @@ export interface WSRequestControlTransferToBackend extends WSMessage{
 export interface WSRequestControlTransferToClient extends WSMessage{
     identifier: string;
     username: string
-}
-
-
-
-/* Careful, this function is dumb and only checks the interfaceName
-   that gets send! Make sure to not use the wrong interfaceName for the
-   belonging data on the backend !!! */
-export function messageIsOfInterface(message: any, interfaceName: string){
-    const parsedMessage = JSON.parse(message)
-    if(parsedMessage){
-        if(parsedMessage.interfaceType == interfaceName){
-            return true;
-        }
-    }
-    return false;
 }

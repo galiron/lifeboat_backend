@@ -3,9 +3,9 @@ import express from 'express';
 import * as http from 'http';
 import * as WebSocket from 'ws';
 import { AddressInfo } from 'net';
-import { ControlSocket } from './models/ControllsSocket';
+import { CanBusWebSocket } from './WebSockets/CanBusWebSocket';
 import { feedVigilanceControl, feedWatchdog, lock, requestControlTransfer, select, shift, steer, throttle, transferControl, transferControlDeclined, unlock } from './logic/WebsocketApi';
-import { WebSocketManager } from './models/WebSocketManager';
+import { ClientWebSocketManager } from './WebSockets/ClientWebSocketManager';
 import { Server } from "socket.io"
 
 const app = express();
@@ -16,7 +16,7 @@ const controlManager: ControlManager = new ControlManager
 // initialize a simple http server
 const server = http.createServer(app);
 // initilaize socket.io wrapper for communication with the control device
-const controlSocket = new ControlSocket();
+const controlSocket = new CanBusWebSocket();
 // initialize the WebSocket server instance
 const io = new Server(server, {
 	cors: {
@@ -24,11 +24,10 @@ const io = new Server(server, {
 	}
 })
 //const wss = new WebSocket.Server({ server });
-const webSocketManager: WebSocketManager = new WebSocketManager(io);
+const webSocketManager: ClientWebSocketManager = new ClientWebSocketManager(io);
 
 io.on("connection", (socket) => {
 	webSocketManager.addClient(socket.id);
-	console.log("connected, current controller = ", controlManager.getControllerToken())
 	socket.on("lock", (msg) => {
 		lock(msg, webSocketManager, controlManager, socket.id)
 	});

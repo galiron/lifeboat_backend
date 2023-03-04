@@ -1,15 +1,11 @@
-import { Instruction } from './../models/Interfaces';
 import { Server } from 'socket.io';
-import { ControlSocket } from '../models/ControllsSocket';
-import { messageIsOfInterface, WSAPIMessage, WSControlTransferResponse, WSJwtMessage, WSLockReleaseResponse, WSLockRequest, WSRequestControlTransferToBackend, WSSelectRequest, WSShifttRequest, WSSteeringRequest, WSThrottleRequest, WSVigilanceFeedResponse } from "../models/WSMessageInterfaces";
+import { CanBusWebSocket } from '../WebSockets/CanBusWebSocket';
+import { WSControlTransferResponse, WSJwtMessage, WSLockReleaseResponse, WSLockRequest, WSRequestControlTransferToBackend, WSSelectRequest, WSShifttRequest, WSSteeringRequest, WSThrottleRequest, WSVigilanceFeedResponse } from "../models/WSMessageInterfaces";
 import { ControlManager } from "./ControlManager";
-import * as WebSocket from 'ws';
-import { WebSocketManager } from '../models/WebSocketManager';
-import { Socket } from 'socket.io-client';
-import { DefaultEventsMap } from 'socket.io/dist/typed-events';
+import { ClientWebSocketManager } from '../WebSockets/ClientWebSocketManager';
 import { requestIsAllowed } from '../utils/helpers';
 
-export function lock(data: WSLockRequest, webSocketManager: WebSocketManager, controlManager: ControlManager, socketId: string){
+export function lock(data: WSLockRequest, webSocketManager: ClientWebSocketManager, controlManager: ControlManager, socketId: string){
     try {
         if (data.password) {
             controlManager.takeControl(data.username, data.password, webSocketManager, socketId)
@@ -26,7 +22,7 @@ export function lock(data: WSLockRequest, webSocketManager: WebSocketManager, co
         console.log(err)
     }
 }
-export function requestControlTransfer(data: WSRequestControlTransferToBackend, webSocketManager: WebSocketManager, controlManager: ControlManager, server: Server, socketId: string){
+export function requestControlTransfer(data: WSRequestControlTransferToBackend, webSocketManager: ClientWebSocketManager, controlManager: ControlManager, server: Server, socketId: string){
     try {
         if (data.username && data.password) {
             if(!(webSocketManager.findCurrentController()?.socketId === socketId)){
@@ -50,7 +46,7 @@ export function requestControlTransfer(data: WSRequestControlTransferToBackend, 
         console.log(err)
     }
 }
-export function transferControl(data: WSControlTransferResponse, webSocketManager: WebSocketManager, controlManager: ControlManager, server: Server, socketId: string) {
+export function transferControl(data: WSControlTransferResponse, webSocketManager: ClientWebSocketManager, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt && data.identifier){
             controlManager.transferControl(data.jwt, data.identifier, webSocketManager)
@@ -66,7 +62,7 @@ export function transferControl(data: WSControlTransferResponse, webSocketManage
         console.log(err)
     }
 }
-export function transferControlDeclined(data: WSControlTransferResponse, webSocketManager: WebSocketManager, controlManager: ControlManager, server: Server, socketId: string) {
+export function transferControlDeclined(data: WSControlTransferResponse, webSocketManager: ClientWebSocketManager, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt && data.identifier){
             controlManager.transferControlDeclined(data.jwt, data.identifier, webSocketManager)
@@ -77,7 +73,7 @@ export function transferControlDeclined(data: WSControlTransferResponse, webSock
         console.log(err)
     }
 }
-export function unlock(data: WSJwtMessage, webSocketManager: WebSocketManager, controlManager: ControlManager, server: Server, socketId: string) {
+export function unlock(data: WSJwtMessage, webSocketManager: ClientWebSocketManager, controlManager: ControlManager, server: Server, socketId: string) {
     try { 
         if (data.jwt){
             const releaseMessage = controlManager.releaseControl(data.jwt)
@@ -90,7 +86,7 @@ export function unlock(data: WSJwtMessage, webSocketManager: WebSocketManager, c
         console.log(err)
     }
 }
-export function feedWatchdog(data: WSJwtMessage, webSocketManager: WebSocketManager, controlManager: ControlManager, server: Server, socketId: string) {
+export function feedWatchdog(data: WSJwtMessage, webSocketManager: ClientWebSocketManager, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt){
             controlManager.getTimeoutManager().feedWatchdog(webSocketManager, data.jwt, controlManager).catch((err) => {
@@ -103,7 +99,7 @@ export function feedWatchdog(data: WSJwtMessage, webSocketManager: WebSocketMana
         console.log(err)
     }
 }
-export function feedVigilanceControl(data: WSJwtMessage, webSocketManager: WebSocketManager, controlManager: ControlManager, server: Server, socketId: string) {
+export function feedVigilanceControl(data: WSJwtMessage, webSocketManager: ClientWebSocketManager, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt){
             controlManager.getTimeoutManager().feedVigilanceControl(webSocketManager, data.jwt, controlManager).then(() => {
@@ -122,7 +118,7 @@ export function feedVigilanceControl(data: WSJwtMessage, webSocketManager: WebSo
         console.log(err)
     }
 }
-export function select(data: WSSelectRequest, webSocketManager: WebSocketManager,controlSocket: ControlSocket, controlManager: ControlManager, server: Server, socketId: string) {
+export function select(data: WSSelectRequest, webSocketManager: ClientWebSocketManager, controlSocket: CanBusWebSocket, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt && data.instruction){
             const isAllowed = requestIsAllowed(webSocketManager,webSocketManager.findCurrentController(), controlManager.getControllerToken(), data.jwt)
@@ -136,7 +132,7 @@ export function select(data: WSSelectRequest, webSocketManager: WebSocketManager
         console.log(err)
     }
 }
-export function shift(data: WSShifttRequest, webSocketManager: WebSocketManager,controlSocket: ControlSocket, controlManager: ControlManager, server: Server, socketId: string) {
+export function shift(data: WSShifttRequest, webSocketManager: ClientWebSocketManager, controlSocket: CanBusWebSocket, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt && data.instruction){
             const isAllowed = requestIsAllowed(webSocketManager,webSocketManager.findCurrentController(), controlManager.getControllerToken(), data.jwt)
@@ -150,7 +146,7 @@ export function shift(data: WSShifttRequest, webSocketManager: WebSocketManager,
         console.log(err)
     }
 }
-export function throttle(data: WSThrottleRequest, webSocketManager: WebSocketManager,controlSocket: ControlSocket, controlManager: ControlManager, server: Server, socketId: string) {
+export function throttle(data: WSThrottleRequest, webSocketManager: ClientWebSocketManager, controlSocket: CanBusWebSocket, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt && data.instruction){
             const isAllowed = requestIsAllowed(webSocketManager,webSocketManager.findCurrentController(), controlManager.getControllerToken(), data.jwt)
@@ -164,7 +160,7 @@ export function throttle(data: WSThrottleRequest, webSocketManager: WebSocketMan
         console.log(err)
     }
 }
-export function steer(data: WSSteeringRequest, webSocketManager: WebSocketManager,controlSocket: ControlSocket, controlManager: ControlManager, server: Server, socketId: string) {
+export function steer(data: WSSteeringRequest, webSocketManager: ClientWebSocketManager, controlSocket: CanBusWebSocket, controlManager: ControlManager, server: Server, socketId: string) {
     try {
         if (data.jwt && data.instruction){
             const isAllowed = requestIsAllowed(webSocketManager,webSocketManager.findCurrentController(), controlManager.getControllerToken(), data.jwt)

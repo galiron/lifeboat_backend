@@ -7,10 +7,10 @@ import { Watchdog } from 'watchdog'
 import { Queue } from 'queue-typescript';
 import { ControlTransferObject } from '../models/Interfaces';
 import { WSControlTransferResponse } from '../models/WSMessageInterfaces';
-import { WebSocketManager } from '../models/WebSocketManager';
+import { ClientWebSocketManager } from '../WebSockets/ClientWebSocketManager';
 import * as WebSocket from 'ws';
 import { WSConnection } from '../models/WSConnection';
-import { TimeoutManager } from '../models/TimeoutManager';
+import { TimeoutManager } from './TimeoutManager';
 import { requestIsAllowed } from '../utils/helpers';
 import * as fs from 'fs'
 
@@ -35,11 +35,9 @@ export class ControlManager {
         });
 
         for(let user of JSON.parse(this.data).users){
-            console.log("user: ", user)
             this.users.push(user)
         }
         for(let camera of JSON.parse(this.data).cameras){
-            console.log("user: ", camera)
             this.cameraData.push(camera)
         }
     }
@@ -57,12 +55,13 @@ export class ControlManager {
         return this.timeoutManager
     }
 
-    async takeControl(name: string, password: string, webSocketManager: WebSocketManager, socketId: string | undefined, force?: boolean) {
+    async takeControl(name: string, password: string, webSocketManager: ClientWebSocketManager, socketId: string | undefined, force?: boolean) {
         let success: boolean = false;
         console.log("User is verified: ",this.verifyUser(name, password));
         if ((this.isLocked == false || force === true) && this.verifyUser(name, password)) {
             this.isLocked = true;
-            const controller: WSConnection | undefined = webSocketManager.findClientBySocketId(socketId);
+            let controller: WSConnection | undefined = webSocketManager.findClientBySocketId(socketId);
+            controller?.setIdentity(name)
             console.log("controller is now: ", controller)
             if(controller) {
                 const oldController = webSocketManager.findCurrentController();
@@ -108,7 +107,7 @@ export class ControlManager {
         @param name: name of the requesting user that gets displayed to the user in control
         @param secretKey: key for new jwt token generation
     */
-    async requestControlTransfer(webSocketManager: WebSocketManager, secretKey: string, name: string, server: Server, socketId: string) {
+    async requestControlTransfer(webSocketManager: ClientWebSocketManager, secretKey: string, name: string, server: Server, socketId: string) {
         const identifier = webSocketManager.findIdentifierBySocketId(socketId);
         if(identifier) {
             let controlTransferObject: ControlTransferObject = {
@@ -146,7 +145,7 @@ export class ControlManager {
         }
     }
 
-    transferControl(jwt: string, identifier: string, webSocketManager: WebSocketManager) {
+    transferControl(jwt: string, identifier: string, webSocketManager: ClientWebSocketManager) {
         let newController: ControlTransferObject | undefined = this.requesters.find(requester => requester.identifier === identifier)
         const client = webSocketManager.findClientByIdentifier(identifier);
         if (newController && client) {
@@ -165,7 +164,7 @@ export class ControlManager {
         }
     }
 
-    transferControlDeclined(jwt: string, identifier: string, webSocketManager: WebSocketManager) {
+    transferControlDeclined(jwt: string, identifier: string, webSocketManager: ClientWebSocketManager) {
         let declinedClient: ControlTransferObject | undefined = this.requesters.find(requester => requester.identifier === identifier)
         if(declinedClient) {
             const index = this.requesters.indexOf(declinedClient, 0);
@@ -199,13 +198,9 @@ export class ControlManager {
     verifyUser(name: string, password: string) : boolean {
         let userToCheck : {"name": string,"password" : string} = {"name": name,"password": password}
         for (let entry of this.users){
-            console.log("entry: ", entry);
-            console.log(" equals user: ", userToCheck);
             if (entry.name === userToCheck.name && entry.password === userToCheck.password) {
-                console.log(" = true");
                 return true
             } else{
-                console.log(" = false");
             }
         }
         return false

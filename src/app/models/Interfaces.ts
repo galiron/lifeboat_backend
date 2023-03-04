@@ -7,3 +7,8 @@ export interface ControlTransferObject{
 export interface Instruction {
     value: number
 }
+
+export interface CameraData {
+    name: string;
+    uuid: string;
+}
