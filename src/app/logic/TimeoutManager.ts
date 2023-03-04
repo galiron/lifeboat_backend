@@ -2,7 +2,6 @@ import { Subject } from "rxjs/internal/Subject";
 import Watchdog from "watchdog";
 import { requestIsAllowed } from "../utils/helpers";
 import { ClientWebSocketManager } from "../WebSockets/ClientWebSocketManager";
-import jwt from 'jsonwebtoken';
 import { ControlManager } from "./ControlManager";
 
 export class TimeoutManager {
@@ -98,7 +97,6 @@ export class TimeoutManager {
                         timeout: timeoutTime,
                       })
                     resolve("success")
-                    // console.log(decoded)
                 } else {
                     console.log("client: is not allowed to feed: ", clientToken)
                     console.log("only allowed client is:  ", controlManager.getControllerToken())

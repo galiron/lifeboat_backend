@@ -1,7 +1,6 @@
 import { ControlManager } from './logic/ControlManager';
 import express from 'express';
 import * as http from 'http';
-import * as WebSocket from 'ws';
 import { AddressInfo } from 'net';
 import { CanBusWebSocket } from './WebSockets/CanBusWebSocket';
 import { feedVigilanceControl, feedWatchdog, lock, requestControlTransfer, select, shift, steer, throttle, transferControl, transferControlDeclined, unlock } from './logic/WebsocketApi';

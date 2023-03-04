@@ -7,7 +7,6 @@ export class CanBusWebSocket {
   private controlSocket = io(this.data.canBusApiURL);
 
   constructor() {
-    // client-side
     this.controlSocket.on("connect", () => {
       console.log("Established connection to ID: ",this.controlSocket.id);
     });

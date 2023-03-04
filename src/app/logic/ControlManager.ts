@@ -1,14 +1,9 @@
 import { Server } from 'socket.io';
-import { Request, Response } from 'express';
-import jwt, { Secret, JwtPayload } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import generator from 'generate-password-ts';
 import bcrypt from 'bcrypt';
-import { Watchdog } from 'watchdog'
-import { Queue } from 'queue-typescript';
 import { ControlTransferObject } from '../models/Interfaces';
-import { WSControlTransferResponse } from '../models/WSMessageInterfaces';
 import { ClientWebSocketManager } from '../WebSockets/ClientWebSocketManager';
-import * as WebSocket from 'ws';
 import { WSConnection } from '../models/WSConnection';
 import { TimeoutManager } from './TimeoutManager';
 import { requestIsAllowed } from '../utils/helpers';
@@ -80,7 +75,6 @@ export class ControlManager {
             this.currentController.jwt = jwt.sign(this.password, password);
             this.secretKey = password;
             success = true;
-            // check if old watchdog messes around with new one
             this.timeoutManager.setupWatchdog(webSocketManager, String(this.currentController.jwt), this);
             this.timeoutManager.setupVigilanceControl(webSocketManager);
             return {
@@ -100,10 +94,7 @@ export class ControlManager {
         }
     };
 
-    /*
-        @param name: name of the requesting user that gets displayed to the user in control
-        @param secretKey: key for new jwt token generation
-    */
+
     async requestControlTransfer(webSocketManager: ClientWebSocketManager, password: string, name: string, server: Server, socketId: string) {
         const identifier = webSocketManager.findIdentifierBySocketId(socketId);
         if(identifier) {
@@ -144,8 +135,6 @@ export class ControlManager {
         let newController: ControlTransferObject | undefined = this.requesters.find(requester => requester.identifier === identifier)
         const client = webSocketManager.findClientByIdentifier(identifier);
         if (newController && client) {
-            console.log("give control to: ", newController)
-            console.log("give control to client: ", client)
             const isAllowed = requestIsAllowed(webSocketManager,webSocketManager.findCurrentController(), this.getControllerToken(), jwt)
             if(isAllowed){
                 webSocketManager.emitMessage(this.currentController.socketId, "WSLockReleaseResponse", this.releaseControl(jwt, true));
@@ -173,7 +162,6 @@ export class ControlManager {
 
     releaseControl(clientToken: string, keepLock?: boolean) {
         let success: boolean = false;
-        console.log("request from to: ", clientToken)
         try {
             if(!keepLock){
                 console.log("unlocking")

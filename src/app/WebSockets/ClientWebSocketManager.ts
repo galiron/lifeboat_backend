@@ -50,6 +50,7 @@ export class ClientWebSocketManager {
             return undefined;
         }
     }
+    
     findClientBySocketId(socketId: string | undefined): WSConnection | undefined {
         let client = this.wsClients.find(client => client.socketId === socketId);
         if(client) {
