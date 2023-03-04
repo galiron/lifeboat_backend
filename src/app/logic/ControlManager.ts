@@ -88,7 +88,7 @@ export class ControlManager {
             return {
                 jwt: "", // 
                 success,
-                cameraData: undefined,
+                cameraData: this.cameraData,
                 interfaceType: "WSControlAssignment"
             }
         }
