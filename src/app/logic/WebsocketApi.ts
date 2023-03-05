@@ -150,7 +150,7 @@ export function throttle(data: WSThrottleRequest, webSocketManager: ClientWebSoc
     try {
         if (data.jwt && data.instruction){
             const isAllowed = requestIsAllowed(webSocketManager,webSocketManager.findCurrentController(), controlManager.getControllerToken(), data.jwt)
-            if(isAllowed){
+            if(isAllowed) {
                 controlSocket.emit("throttle", data.instruction)
             }
         } else {

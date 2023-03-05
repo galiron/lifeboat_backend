@@ -64,7 +64,12 @@ export class ControlManager {
                 controller.hasControl = true;
                 this.currentController = controller;
             } else{
-                success = false;
+                return {
+                    jwt: "",
+                    success  : false,
+                    cameraData: this.cameraData,
+                    interfaceType: "WSControlAssignment"
+                }
             }
             this.password = generator.generate({
                 length: 20,
@@ -78,7 +83,7 @@ export class ControlManager {
             this.timeoutManager.setupWatchdog(webSocketManager, String(this.currentController.jwt), this);
             this.timeoutManager.setupVigilanceControl(webSocketManager);
             return {
-                jwt: this.currentController.jwt, // 
+                jwt: this.currentController.jwt,
                 success,
                 cameraData: this.cameraData,
                 interfaceType: "WSControlAssignment"
@@ -97,7 +102,7 @@ export class ControlManager {
 
     async requestControlTransfer(webSocketManager: ClientWebSocketManager, password: string, name: string, server: Server, socketId: string) {
         const identifier = webSocketManager.findIdentifierBySocketId(socketId);
-        if(identifier) {
+        if(identifier && this.verifyUser(name, password)) {
             let controlTransferObject: ControlTransferObject = {
                 "password":password,
                 "username":name,
