@@ -17,11 +17,6 @@ export interface WSVigilanceFeedResponse extends WSMessageResponse {
     
 }
 
-export interface WSAPIMessage extends WSMessage{
-    api: string;
-    data: any;
-}
-
 export interface WSMessageResponse extends WSMessage{
     success: boolean;
 }
@@ -39,9 +34,6 @@ export interface WSJwtMessage extends WSMessage{
 }
 
 export interface WSFeedDogRequest extends WSMessage{
-}
-
-export interface WSConnectionTerminated extends WSMessage{
 }
 
 export interface WSLockReleaseResponse extends WSMessageResponse{

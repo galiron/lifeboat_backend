@@ -53,7 +53,7 @@ export function transferControl(data: WSControlTransferResponse, webSocketManage
         } else {
             const data = {
                 success: false,
-                errorMessage: "the request was missing a jwt token or identifier",
+                errorMessage: "the request is missing a jwt token or identifier",
                 interfaceType: "WSErrorResponse"
             }
             webSocketManager.emitMessage(socketId,"WSErrorResponse" , data);
