@@ -5,12 +5,12 @@ import { ControlManager } from "./ControlManager";
 import { ClientWebSocketManager } from '../WebSockets/ClientWebSocketManager';
 import { requestIsAllowed } from '../utils/helpers';
 
-export function lock(data: WSLockRequest, webSocketManager: ClientWebSocketManager, controlManager: ControlManager, socketId: string){
+export function lock(data: WSLockRequest, webSocketManager: ClientWebSocketManager, controlManager: ControlManager, socketId: string, controlSocket: CanBusWebSocket){
     try {
         if (data.password) {
             controlManager.takeControl(data.username, data.password, webSocketManager, socketId)
             .then((jwtMsg) => {
-                console.log(jwtMsg)
+                controlSocket.emit("newUser", undefined);
                 webSocketManager.emitMessage(socketId, "WSControlAssignment", jwtMsg);
                 }
             )
@@ -46,10 +46,19 @@ export function requestControlTransfer(data: WSRequestControlTransferToBackend, 
         console.log(err)
     }
 }
-export function transferControl(data: WSControlTransferResponse, webSocketManager: ClientWebSocketManager, controlManager: ControlManager, server: Server, socketId: string) {
+export function transferControl(data: WSControlTransferResponse, webSocketManager: ClientWebSocketManager, controlManager: ControlManager, controlSocket: CanBusWebSocket, socketId: string) {
     try {
         if (data.jwt && data.identifier){
-            controlManager.transferControl(data.jwt, data.identifier, webSocketManager)
+            controlManager.transferControl(data.jwt, data.identifier, webSocketManager).then((msg) => {
+                controlSocket.emit("newUser", undefined);
+            }).catch( (msg) => {
+                const data = {
+                    success: false,
+                    errorMessage: msg,
+                    interfaceType: "WSErrorResponse"
+                }
+                webSocketManager.emitMessage(socketId,"WSErrorResponse" , data);
+            })
         } else {
             const data = {
                 success: false,

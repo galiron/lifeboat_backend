@@ -75,6 +75,8 @@ export class TimeoutManager {
                 this.requestDogFood(webSocketManager.findCurrentController()?.socketId, webSocketManager)
                 this.watchDogPoll(webSocketManager, initializedToken, controlManager)
             }, 1000);
+        } else {
+            controlManager.resetRequesters();
         }
     }
 

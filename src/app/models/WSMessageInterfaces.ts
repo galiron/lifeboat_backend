@@ -27,6 +27,7 @@ export interface WSJwtResponse extends WSMessageResponse{
 
 export interface WSControlAssignment extends WSJwtResponse{
     cameraData: CameraData [];
+    isAuthorized: boolean
 }
 
 export interface WSJwtMessage extends WSMessage{

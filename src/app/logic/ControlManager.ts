@@ -37,6 +37,10 @@ export class ControlManager {
         }
     }
 
+    resetRequesters() : void {
+        this.requesters = []
+    }
+
     getControllerToken(): string{
         return String(this.currentController?.jwt);
     }
@@ -52,7 +56,8 @@ export class ControlManager {
 
     async takeControl(name: string, password: string, webSocketManager: ClientWebSocketManager, socketId: string | undefined, force?: boolean) {
         let success: boolean = false;
-        if ((this.isLocked == false || force === true) && this.verifyUser(name, password)) {
+        const isAuthorized = this.verifyUser(name, password)
+        if ((this.isLocked == false || force === true) && isAuthorized) {
             this.isLocked = true;
             let controller: WSConnection | undefined = webSocketManager.findClientBySocketId(socketId);
             console.log("controller is now: ", controller)
@@ -68,6 +73,7 @@ export class ControlManager {
                     jwt: "",
                     success  : false,
                     cameraData: this.cameraData,
+                    isAuthorized : isAuthorized,
                     interfaceType: "WSControlAssignment"
                 }
             }
@@ -86,6 +92,7 @@ export class ControlManager {
                 jwt: this.currentController.jwt,
                 success,
                 cameraData: this.cameraData,
+                isAuthorized : isAuthorized,
                 interfaceType: "WSControlAssignment"
             }
             
@@ -94,6 +101,7 @@ export class ControlManager {
                 jwt: "", // 
                 success,
                 cameraData: this.cameraData,
+                isAuthorized : isAuthorized,
                 interfaceType: "WSControlAssignment"
             }
         }
@@ -108,23 +116,38 @@ export class ControlManager {
                 "username":name,
                 identifier
             };
-            this.requesters.push(controlTransferObject);
-            if(this.currentController){
-                const data = {
-                    success: true,
-                    username: name,
-                    identifier,
-                    interfaceType: "WSRequestControlTransferToClient"
+            let isAlreadyRegistered: boolean = false
+            for (let entry of this.requesters) {
+                if (entry.identifier == controlTransferObject.identifier) {
+                    isAlreadyRegistered = true
                 }
-                webSocketManager.emitMessage(this.currentController.socketId, "WSRequestControlTransferToClient", data);
+            }
+            if(!isAlreadyRegistered){
+                this.requesters.push(controlTransferObject);
+                if(this.currentController){
+                    const data = {
+                        success: true,
+                        username: name,
+                        identifier,
+                        interfaceType: "WSRequestControlTransferToClient"
+                    }
+                    webSocketManager.emitMessage(this.currentController.socketId, "WSRequestControlTransferToClient", data);
+                } else{
+                    const data = {
+                        success: false,
+                        username: name,
+                        undefined,
+                        interfaceType: "WSRequestControlTransferToClient"
+                    }
+                    webSocketManager.emitMessage(socketId, "WSRequestControlTransferToClient", data);
+                }
             } else{
                 const data = {
                     success: false,
-                    username: name,
-                    undefined,
-                    interfaceType: "WSRequestControlTransferToClient"
+                    errorMessage: "already queued a request",
+                    interfaceType: "WSErrorResponse"
                 }
-                webSocketManager.emitMessage(socketId, "WSRequestControlTransferToClient", data);
+                webSocketManager.emitMessage(socketId, "WSErrorResponse", data);
             }
         } else {
             const data = {
@@ -136,19 +159,26 @@ export class ControlManager {
         }
     }
 
-    transferControl(jwt: string, identifier: string, webSocketManager: ClientWebSocketManager) {
+    async transferControl(jwt: string, identifier: string, webSocketManager: ClientWebSocketManager) {
         let newController: ControlTransferObject | undefined = this.requesters.find(requester => requester.identifier === identifier)
         const client = webSocketManager.findClientByIdentifier(identifier);
         if (newController && client) {
             const isAllowed = requestIsAllowed(webSocketManager,webSocketManager.findCurrentController(), this.getControllerToken(), jwt)
             if(isAllowed){
                 webSocketManager.emitMessage(this.currentController.socketId, "WSLockReleaseResponse", this.releaseControl(jwt, true));
-                this.takeControl(newController.username, newController.password, webSocketManager, client.socketId, true).then((jwtMsg) => {
-                    console.log(jwtMsg)
-                    this.requesters = [];
-                    webSocketManager.emitMessage(this.currentController.socketId, "WSControlAssignment", jwtMsg);
+                return new Promise((resolve, reject) => { 
+                    if (newController && client) {
+                        this.takeControl(newController.username, newController.password, webSocketManager, client.socketId, true).then((jwtMsg) => {
+                            console.log(jwtMsg)
+                            this.requesters = [];
+                            webSocketManager.emitMessage(this.currentController.socketId, "WSControlAssignment", jwtMsg);
+                            resolve(jwtMsg)
+                            }
+                        )
+                    } else {
+                        reject("missing controller or client")
                     }
-                )
+                });
             }
         } else {
             console.log("error")
@@ -176,6 +206,7 @@ export class ControlManager {
             }
             success = true;
             this.timeoutManager.dog?.sleep();
+            this.requesters = [];
         } catch(err) {
             console.log(err)
         }

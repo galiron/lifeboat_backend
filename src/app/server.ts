@@ -28,7 +28,7 @@ const webSocketManager: ClientWebSocketManager = new ClientWebSocketManager(io);
 io.on("connection", (socket) => {
 	webSocketManager.addClient(socket.id);
 	socket.on("lock", (msg) => {
-		lock(msg, webSocketManager, controlManager, socket.id)
+		lock(msg, webSocketManager, controlManager, socket.id, controlSocket)
 	});
 	socket.on("unlock", (msg) => {
 		unlock(msg, webSocketManager, controlManager, io, socket.id)
@@ -37,7 +37,7 @@ io.on("connection", (socket) => {
 		requestControlTransfer(msg, webSocketManager, controlManager, io, socket.id)
 	});
 	socket.on("transferControl", (msg) => {
-		transferControl(msg, webSocketManager, controlManager, io, socket.id)
+		transferControl(msg, webSocketManager, controlManager, controlSocket, socket.id)
 	});
 	socket.on("transferControlDeclined", (msg) => {
 		transferControlDeclined(msg, webSocketManager, controlManager, io, socket.id)
