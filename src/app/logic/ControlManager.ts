@@ -2,10 +2,10 @@ import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import generator from 'generate-password-ts';
 import bcrypt from 'bcrypt';
-import { ControlTransferObject } from '../models/Interfaces';
-import { ClientWebSocketManager } from '../WebSockets/ClientWebSocketManager';
-import { WSConnection } from '../models/WSConnection';
-import { TimeoutManager } from './TimeoutManager';
+import { CameraData, ControlTransferObject } from '../models/interfaces';
+import { ClientWebSocketManager } from '../websockets/clientWebSocketManager';
+import { WSConnection } from '../models/wsConnection';
+import { TimeoutManager } from './timeoutManager';
 import { requestIsAllowed } from '../utils/helpers';
 import * as fs from 'fs'
 
@@ -18,7 +18,7 @@ export class ControlManager {
     private requesters: ControlTransferObject[] = [];
     private currentController!: WSConnection;
     private users : Array<{"name": string,"password" : string}> = new Array<{"name": string,"password" : string}>;
-    private cameraData : Array<{"name": string,"uuid" : string}> = new Array<{"name": string,"uuid" : string}>;
+    private cameraData : Array<CameraData> = new Array<CameraData>;
     private data = fs.readFileSync("./src/app/config.json", "utf-8")
     constructor(){
         this.timeoutManager.isLocked$.subscribe((isLocked: boolean) => {
@@ -116,13 +116,15 @@ export class ControlManager {
                 "username":name,
                 identifier
             };
-            let isAlreadyRegistered: boolean = false
+/*             let isAlreadyRegistered: boolean = false
+            isAlreadyRegistered = this.requesters.find(( entry ) => entry.identifier == controlTransferObject.identifier);
+            console.log("test is: ", test)
             for (let entry of this.requesters) {
                 if (entry.identifier == controlTransferObject.identifier) {
                     isAlreadyRegistered = true
                 }
-            }
-            if(!isAlreadyRegistered){
+            } */
+            if(!this.requesters.find(( entry ) => entry.identifier == controlTransferObject.identifier)){
                 this.requesters.push(controlTransferObject);
                 if(this.currentController){
                     const data = {

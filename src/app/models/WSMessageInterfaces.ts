@@ -1,4 +1,4 @@
-import { Instruction, CameraData } from "./Interfaces";
+import { Instruction, CameraData } from "./interfaces";
 
 export interface WSMessage {
     interfaceType: string;

@@ -1,5 +1,5 @@
 import { Server } from 'socket.io';
-import { WSConnection } from "../models/WSConnection";
+import { WSConnection } from "../models/wsConnection";
 
 export class ClientWebSocketManager {
 

@@ -1,10 +1,10 @@
-import { ControlManager } from './logic/ControlManager';
+import { ControlManager } from './logic/controlManager';
 import express from 'express';
 import * as http from 'http';
 import { AddressInfo } from 'net';
-import { CanBusWebSocket } from './WebSockets/CanBusWebSocket';
-import { feedVigilanceControl, feedWatchdog, lock, requestControlTransfer, select, shift, steer, throttle, transferControl, transferControlDeclined, unlock } from './logic/WebsocketApi';
-import { ClientWebSocketManager } from './WebSockets/ClientWebSocketManager';
+import { CanBusWebSocket } from './websockets/canBusWebSocket';
+import { feedVigilanceControl, feedWatchdog, lock, requestControlTransfer, select, shift, steer, throttle, transferControl, transferControlDeclined, unlock } from './logic/websocketApi';
+import { ClientWebSocketManager } from './websockets/clientWebSocketManager';
 import { Server } from "socket.io"
 
 const app = express();

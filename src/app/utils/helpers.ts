@@ -1,5 +1,5 @@
-import { ClientWebSocketManager } from "../WebSockets/ClientWebSocketManager";
-import { WSConnection } from "../models/WSConnection";
+import { ClientWebSocketManager } from "../websockets/clientWebSocketManager";
+import { WSConnection } from "../models/wsConnection";
 
 export function requestIsAllowed(webSocketManager: ClientWebSocketManager, currentController: WSConnection | undefined, controllerToken: string | undefined, jwtToken: string) : boolean {
     if(currentController?.socketId) {
