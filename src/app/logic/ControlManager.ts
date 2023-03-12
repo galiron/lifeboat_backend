@@ -116,14 +116,6 @@ export class ControlManager {
                 "username":name,
                 identifier
             };
-/*             let isAlreadyRegistered: boolean = false
-            isAlreadyRegistered = this.requesters.find(( entry ) => entry.identifier == controlTransferObject.identifier);
-            console.log("test is: ", test)
-            for (let entry of this.requesters) {
-                if (entry.identifier == controlTransferObject.identifier) {
-                    isAlreadyRegistered = true
-                }
-            } */
             if(!this.requesters.find(( entry ) => entry.identifier == controlTransferObject.identifier)){
                 this.requesters.push(controlTransferObject);
                 if(this.currentController){
