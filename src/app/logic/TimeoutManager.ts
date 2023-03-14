@@ -1,8 +1,8 @@
 import { Subject } from "rxjs/internal/Subject";
 import Watchdog from "watchdog";
 import { requestIsAllowed } from "../utils/helpers";
-import { ClientWebSocketManager } from "../websockets/clientWebSocketManager";
-import { ControlManager } from "./controlManager";
+import { ClientWebSocketManager } from "../WebSockets/ClientWebSocketManager";
+import { ControlManager } from "./ControlManager";
 
 export class TimeoutManager {
     dog: Watchdog | undefined;

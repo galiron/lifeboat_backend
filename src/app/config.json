@@ -2,11 +2,11 @@
     "cameras" : [
     {
         "name" : "door",
-        "uuid" : ""
+        "uuid" : "488fac14-b0d7-4d3d-9ca3-e0e1ad2e2ae7"
     },
     {
         "name" : "garden",
-        "uuid" : ""
+        "uuid" : "998fac14-b0d7-4d3d-9ca3-e0e1ad2e2ab5"
     }],
      "users" : [
     {
@@ -17,5 +17,5 @@
         "name" : "extern",
         "password" : "1234"
     }],
-    "canBusApiURL" : "ws://192.168.88.42:3000"
+    "canBusApiURL" : "ws://192.168.188.29:3000"
 }

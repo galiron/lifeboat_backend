@@ -4,7 +4,7 @@ import generator from 'generate-password-ts';
 import bcrypt from 'bcrypt';
 import { CameraData, ControlTransferObject } from '../models/Interfaces';
 import { ClientWebSocketManager } from '../WebSockets/ClientWebSocketManager';
-import { WSConnection } from '../models/wsConnection';
+import { WSConnection } from '../models/WSConnection';
 import { TimeoutManager } from './TimeoutManager';
 import { requestIsAllowed } from '../utils/helpers';
 import * as fs from 'fs'
