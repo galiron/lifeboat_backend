@@ -1,10 +1,10 @@
-import { ControlManager } from './logic/controlManager';
+import { ControlManager } from './logic/ControlManager';
 import express from 'express';
 import * as http from 'http';
 import { AddressInfo } from 'net';
-import { CanBusWebSocket } from './websockets/canBusWebSocket';
-import { feedVigilanceControl, feedWatchdog, lock, requestControlTransfer, select, shift, steer, throttle, transferControl, transferControlDeclined, unlock } from './logic/websocketApi';
-import { ClientWebSocketManager } from './websockets/clientWebSocketManager';
+import { CanBusWebSocket } from './WebSockets/CanBusWebSocket';
+import { feedVigilanceControl, feedWatchdog, lock, requestControlTransfer, select, shift, steer, throttle, transferControl, transferControlDeclined, unlock } from './logic/WebsocketApi';
+import { ClientWebSocketManager } from './WebSockets/ClientWebSocketManager';
 import { Server } from "socket.io"
 
 const app = express();
@@ -63,6 +63,6 @@ io.on("connection", (socket) => {
 })
 
 // start our server
-server.listen(process.env.PORT || 3000, () => {
+server.listen(process.env.PORT || 3010, () => {
     console.log(`Server started on port ${(server.address() as AddressInfo).port} :)`);
 });

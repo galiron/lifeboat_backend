@@ -10,7 +10,15 @@ export class CanBusWebSocket {
     console.log("canbus",this.data.canBusApiURL)
     this.controlSocket.on("connect", () => {
       console.log("Established connection to ID: ",this.controlSocket.id);
+      this.poke()
     });
+  }
+
+  poke() {
+    this.emit("poke",{})
+    setTimeout(() => {
+      this.poke()
+  }, 1000);
   }
 
   // forwarding emit to socket
