@@ -2,10 +2,10 @@ import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import generator from 'generate-password-ts';
 import bcrypt from 'bcrypt';
-import { CameraData, ControlTransferObject } from '../models/interfaces';
-import { ClientWebSocketManager } from '../websockets/clientWebSocketManager';
+import { CameraData, ControlTransferObject } from '../models/Interfaces';
+import { ClientWebSocketManager } from '../WebSockets/ClientWebSocketManager';
 import { WSConnection } from '../models/wsConnection';
-import { TimeoutManager } from './timeoutManager';
+import { TimeoutManager } from './TimeoutManager';
 import { requestIsAllowed } from '../utils/helpers';
 import * as fs from 'fs'
 
