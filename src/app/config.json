@@ -1,0 +1,21 @@
+{
+    "cameras" : [
+    {
+        "name" : "door",
+        "uuid" : ""
+    },
+    {
+        "name" : "garden",
+        "uuid" : ""
+    }],
+     "users" : [
+    {
+        "name" : "captain",
+        "password" : "1234"
+    },
+    {
+        "name" : "extern",
+        "password" : "1234"
+    }],
+    "canBusApiURL" : "ws://192.168.88.42:3000"
+}
