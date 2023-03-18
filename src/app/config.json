@@ -17,5 +17,5 @@
         "name" : "extern",
         "password" : "1234"
     }],
-    "canBusApiURL" : "ws://localhost:3010"
+    "canBusApiURL" : "ws://localhost:3000"
 }
