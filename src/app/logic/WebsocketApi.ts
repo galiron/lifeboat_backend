@@ -3,7 +3,7 @@ import { CanBusWebSocket } from '../WebSockets/CanBusWebSocket';
 import { WSControlTransferResponse, WSJwtMessage, WSLockReleaseResponse, WSLockRequest, WSRequestControlTransferToBackend, WSSelectRequest, WSShifttRequest, WSSteeringRequest, WSThrottleRequest, WSVigilanceFeedResponse } from "../models/WSMessageInterfaces";
 import { ControlManager } from "./ControlManager";
 import { ClientWebSocketManager } from '../WebSockets/ClientWebSocketManager';
-import { requestIsAllowed } from '../utils/helpers';
+import { requestIsAllowed } from '../utils/Helpers';
 
 export function lock(data: WSLockRequest, webSocketManager: ClientWebSocketManager, controlManager: ControlManager, socketId: string, controlSocket: CanBusWebSocket){
     try {

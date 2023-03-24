@@ -1,6 +1,6 @@
 import { Subject } from "rxjs/internal/Subject";
 import Watchdog from "watchdog";
-import { requestIsAllowed } from "../utils/helpers";
+import { requestIsAllowed } from "../utils/Helpers";
 import { ClientWebSocketManager } from "../WebSockets/ClientWebSocketManager";
 import { ControlManager } from "./ControlManager";
 

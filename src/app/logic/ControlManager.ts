@@ -6,7 +6,7 @@ import { CameraData, ControlTransferObject } from '../models/Interfaces';
 import { ClientWebSocketManager } from '../WebSockets/ClientWebSocketManager';
 import { WSConnection } from '../models/WSConnection';
 import { TimeoutManager } from './TimeoutManager';
-import { requestIsAllowed } from '../utils/helpers';
+import { requestIsAllowed } from '../utils/Helpers';
 import * as fs from 'fs'
 
 export class ControlManager {
@@ -211,6 +211,7 @@ export class ControlManager {
     }
 
     verifyUser(name: string, password: string) : boolean {
+        // TODO: Think about a proper way for incryption. Maybe asynchronous key exchange before .lock is called
         let userToCheck : {"name": string,"password" : string} = {"name": name,"password": password}
         for (let entry of this.users){
             if (entry.name === userToCheck.name && entry.password === userToCheck.password) {
