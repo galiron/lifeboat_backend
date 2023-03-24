@@ -6,6 +6,7 @@ import { CanBusWebSocket } from './WebSockets/CanBusWebSocket';
 import { feedVigilanceControl, feedWatchdog, lock, requestControlTransfer, select, shift, steer, throttle, transferControl, transferControlDeclined, unlock } from './logic/WebsocketApi';
 import { ClientWebSocketManager } from './WebSockets/ClientWebSocketManager';
 import { Server } from "socket.io"
+import fs from "fs";
 
 const app = express();
 
@@ -16,13 +17,14 @@ const controlManager: ControlManager = new ControlManager
 const server = http.createServer(app);
 // initilaize socket.io wrapper for communication with the control device
 const controlSocket = new CanBusWebSocket();
+// get configurations
+const config = JSON.parse(fs.readFileSync("./src/app/config.json", "utf-8"));
 // initialize the WebSocket server instance
 const io = new Server(server, {
 	cors: {
-		origin: "http://localhost:4200"
+		origin: config.allowedOrigins // adjust this for the designated origins. Important for productive systems 
 	}
 })
-//const wss = new WebSocket.Server({ server });
 const webSocketManager: ClientWebSocketManager = new ClientWebSocketManager(io);
 
 io.on("connection", (socket) => {
@@ -63,6 +65,6 @@ io.on("connection", (socket) => {
 })
 
 // start our server
-server.listen(process.env.PORT || 3010, () => {
+server.listen(config.hostPort || 3010, config.hostURL || 'localhost', () => {
     console.log(`Server started on port ${(server.address() as AddressInfo).port} :)`);
 });
