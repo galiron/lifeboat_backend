@@ -65,6 +65,6 @@ io.on("connection", (socket) => {
 })
 
 // start our server
-server.listen(config.hostPort || 3010, config.hostURL || 'localhost', () => {
+server.listen(config.hostPort, config.hostURL, () => {
     console.log(`Server started on port ${(server.address() as AddressInfo).port} :)`);
 });

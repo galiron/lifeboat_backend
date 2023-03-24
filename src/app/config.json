@@ -17,7 +17,7 @@
         "name" : "extern",
         "password" : "1234"
     }],
-    "canBusApiURL" : "ws://localhost:3000",
+    "canBusApiURL" : "http://127.0.0.1:3000",
     "hostURL" : "127.0.0.1",
     "hostPort" : "3010",
     "allowedOrigins" : "http://localhost:4200"
